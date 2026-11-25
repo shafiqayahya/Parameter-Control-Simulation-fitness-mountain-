@@ -264,6 +264,225 @@ st.markdown(
         }}
     }}
 
+    
+/* ==================================================
+   FINAL UI REFINEMENT
+   ================================================== */
+
+.block-container {{
+    max-width: 1500px;
+    padding-top: 1.5rem;
+    padding-bottom: 1rem;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+}}
+
+/* HEADER SPACING */
+
+.hero {{
+    padding-bottom: 14px;
+}}
+
+.hero-title {{
+    font-size: 36px;
+    letter-spacing: 5px;
+    margin: 5px 0;
+}}
+
+.hero-subtitle {{
+    font-size: 10px;
+    letter-spacing: 3px;
+}}
+
+/* GENERAL SPACING */
+
+[data-testid="stVerticalBlock"] {{
+    gap: 0.55rem;
+}}
+
+[data-testid="stHorizontalBlock"] {{
+    gap: 1rem;
+}}
+
+/* SECTION LABEL */
+
+.section-label {{
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-top: 6px;
+    margin-bottom: 5px;
+}}
+
+/* CONTROL PANEL */
+
+[data-testid="stRadio"] {{
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid #26394C;
+    border-radius: 10px;
+    padding: 10px 14px;
+}}
+
+[data-testid="stRadio"] label {{
+    font-size: 13px;
+}}
+
+[data-testid="stRadio"] [role="radiogroup"] {{
+    gap: 6px;
+}}
+
+.strategy-info {{
+    min-height: 0;
+    padding: 10px 14px;
+    margin-bottom: 5px;
+    background: rgba(15, 23, 42, 0.88);
+    border-radius: 8px;
+    line-height: 1.5;
+}}
+
+/* SLIDER */
+
+[data-testid="stSlider"] {{
+    padding-top: 5px;
+    padding-bottom: 0;
+}}
+
+/* STATISTIC CARDS */
+
+[data-testid="stMetric"] {{
+    background: rgba(15, 23, 42, 0.90);
+    border: 1px solid #26394C;
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-height: 78px;
+}}
+
+[data-testid="stMetricLabel"] p {{
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: #94A3B8;
+}}
+
+[data-testid="stMetricValue"] {{
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.2;
+}}
+
+/* BEST FITNESS */
+
+[data-testid="stHorizontalBlock"]
+> [data-testid="stColumn"]:nth-child(2)
+[data-testid="stMetricValue"] {{
+    color: #FBBF24;
+}}
+
+/* MUTATION STEP SIZE */
+
+[data-testid="stHorizontalBlock"]
+> [data-testid="stColumn"]:nth-child(3)
+[data-testid="stMetricValue"] {{
+    color: #E879F9;
+}}
+
+/* GAME BUTTONS */
+
+.stButton > button {{
+    min-height: 36px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: rgba(15, 23, 42, 0.95);
+    color: #CBD5E1;
+    font-size: 12px;
+    font-weight: 600;
+}}
+
+.stButton > button[kind="primary"] {{
+    background: #155E75;
+    border-color: #22D3EE;
+    color: #FFFFFF;
+}}
+
+.stButton > button:hover {{
+    background: #164E63;
+    border-color: #22D3EE;
+    color: #FFFFFF;
+    box-shadow: 0 0 10px #22D3EE22;
+}}
+
+/* FITNESS LANDSCAPE */
+
+[data-testid="stImage"] img {{
+    border-radius: 12px;
+    border: 1px solid #26394C;
+}}
+
+/* LIVE FEEDBACK */
+
+.feedback-box {{
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 3px;
+    margin-bottom: 8px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #334155;
+    border-left: 3px solid #FBBF24;
+}}
+
+.feedback-title {{
+    font-size: 10px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}}
+
+/* MISSION */
+
+.mission {{
+    font-size: 11px;
+    line-height: 1.5;
+    color: #94A3B8;
+}}
+
+/* CAPTIONS */
+
+[data-testid="stCaptionContainer"] p {{
+    color: #94A3B8;
+    font-size: 11px;
+    line-height: 1.4;
+}}
+
+/* COMPACT DESKTOP HEIGHT */
+
+@media (max-height: 900px) {{
+
+    .block-container {{
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+    }}
+
+    .hero {{
+        padding-bottom: 8px;
+    }}
+
+    .hero-title {{
+        font-size: 32px;
+    }}
+
+    [data-testid="stVerticalBlock"] {{
+        gap: 0.4rem;
+    }}
+
+    [data-testid="stMetric"] {{
+        min-height: 68px;
+        padding: 10px 14px;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        font-size: 24px;
+    }}
+
+}}
+
     </style>
     """,
     unsafe_allow_html=True
@@ -697,7 +916,7 @@ left, right = st.columns(
 # LEFT PANEL — GAME CONTROLS
 # ==================================================
 
-with left:
+with left, st.container(border=True):
 
     st.markdown(
         '<div class="section-label">'
@@ -891,9 +1110,9 @@ with right:
 
     y_values = fitness(x_values)
 
-    fig, ax = plt.subplots(
-        figsize=(12, 3.2),
-        dpi=100
+   fig, ax = plt.subplots(
+    figsize=(12, 2.8),
+    dpi=120
     )
 
     fig.patch.set_facecolor("#080F20")
@@ -1097,7 +1316,8 @@ with right:
 # ==================================================
 
 st.markdown(
-    '<div style="height:5px;"></div>',
+    '<div style="border-top:1px solid #26394C;'
+    'margin:6px 0 8px;"></div>',
     unsafe_allow_html=True
 )
 
