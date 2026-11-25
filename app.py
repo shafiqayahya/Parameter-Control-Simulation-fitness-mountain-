@@ -1503,7 +1503,7 @@ with right:
     y_values = fitness(x_values)
 
     fig, ax = plt.subplots(
-        figsize=(12, 2.8),
+        figsize=(12, 2.6),
         dpi=120
     )
 
@@ -1682,26 +1682,29 @@ with right:
 
     plt.close(fig)
 
+   
     # ----------------------------------------------
     # GRAPH LEGEND
     # ----------------------------------------------
 
     st.markdown(
-        '<div style="font-size:11px;'
-        'color:#94A3B8;'
-        'text-align:center;">'
-        '<span style="color:#38BDF8;">●</span> '
+        '<div class="graph-legend">'
+        '<span>'
+        '<b style="color:#38BDF8;">●</b> '
         'Population members'
-        '&nbsp;&nbsp; | &nbsp;&nbsp;'
-        f'<span style="color:{accent};">◉</span> '
+        '</span>'
+        '<span>'
+        f'<b style="color:{accent};">◉</b> '
         'Best individual'
-        '&nbsp;&nbsp; | &nbsp;&nbsp;'
-        '<span style="color:#FBBF24;">★</span> '
+        '</span>'
+        '<span>'
+        '<b style="color:#FBBF24;">★</b> '
         'Global optimum'
+        '</span>'
         '</div>',
         unsafe_allow_html=True
     )
-
+    
     # ----------------------------------------------
     # LIVE EVOLUTION FEEDBACK
     # ----------------------------------------------
