@@ -1,3 +1,4 @@
+
 import streamlit as st
 import numpy as np
 import matplotlib
@@ -27,7 +28,65 @@ st.set_page_config(
 
 
 # ============================================================
-# 02. BACKGROUND IMAGE
+# 02. CONSTANTS
+# ============================================================
+
+MAX_GENERATIONS = 30
+POPULATION_SIZE = 5
+
+MIN_SIGMA = 0.5
+MAX_SIGMA = 50.0
+
+MIN_POSITION = 0
+MAX_POSITION = 100
+
+INITIAL_POSITION = 10
+LOCAL_OPTIMUM = 27
+GLOBAL_OPTIMUM = 79
+
+TARGET_POSITION = GLOBAL_OPTIMUM
+
+RANDOM_SEED = 44
+
+SIMULATION_VERSION = "fitness_mountain_v5"
+
+STRATEGIES = {
+    "Manual": {
+        "color": "#4ADE80",
+        "description": (
+            "Adjust your step size and preview mutations "
+            "before accepting the next generation."
+        )
+    },
+
+    "Deterministic": {
+        "color": "#22D3EE",
+        "description": (
+            "Step size decreases automatically according "
+            "to a predefined generation schedule."
+        )
+    },
+
+    "Adaptive": {
+        "color": "#FBBF24",
+        "description": (
+            "Step size changes according to mutation "
+            "success using the 1/5 Success Rule."
+        )
+    },
+
+    "Self-Adaptive": {
+        "color": "#E879F9",
+        "description": (
+            "Each individual evolves its own mutation "
+            "step size through mutation and selection."
+        )
+    }
+}
+
+
+# ============================================================
+# 03. BACKGROUND IMAGE
 # ============================================================
 
 @st.cache_data
@@ -36,6 +95,7 @@ def load_background():
     path = Path(__file__).parent / "background.jpg"
 
     if path.exists():
+
         return base64.b64encode(
             path.read_bytes()
         ).decode("utf-8")
@@ -47,38 +107,33 @@ background = load_background()
 
 
 # ============================================================
-# 03. GLOBAL CSS
+# 04. GLOBAL CSS
 # ============================================================
 
 CSS = """
 <style>
 
 :root {
-    --background: #080D1C;
-    --panel: #111827;
-    --border: #29384C;
     --cyan: #22D3EE;
     --light-cyan: #67E8F9;
     --gold: #FBBF24;
     --purple: #E879F9;
-    --text: #E2E8F0;
+    --green: #4ADE80;
+    --red: #F87171;
     --muted: #94A3B8;
-    --success: #4ADE80;
-    --danger: #F87171;
+    --panel: #111827;
+    --border: #29384C;
+    --ui: clamp(0.82px, 0.135dvh, 1.25px);
 }
-
-
-/* =========================================================
-   FIXED SCREEN — NO SCROLL
-   ========================================================= */
 
 html,
 body,
-#root {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
+#root,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"] {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     overflow: hidden !important;
     overscroll-behavior: none !important;
 }
@@ -88,8 +143,8 @@ body,
 
     background-image:
         linear-gradient(
-            rgba(5, 10, 25, 0.87),
-            rgba(5, 10, 25, 0.87)
+            rgba(5,10,25,0.87),
+            rgba(5,10,25,0.87)
         ),
         url("data:image/jpeg;base64,__BACKGROUND__");
 
@@ -98,11 +153,6 @@ body,
     background-attachment: fixed;
 
     color: #E2E8F0;
-
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-
-    overflow: hidden !important;
 }
 
 [data-testid="stHeader"] {
@@ -114,26 +164,18 @@ body,
     display: none;
 }
 
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"] {
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    overflow: hidden !important;
-    overscroll-behavior: none !important;
-}
-
 .block-container {
     width: 100% !important;
-    max-width: 1800px !important;
+    max-width: none !important;
 
     height: 100dvh !important;
-    max-height: 100dvh !important;
 
-    padding: 10px 24px !important;
+    padding: 10px 24px 12px !important;
+
     margin: 0 auto !important;
 
-    box-sizing: border-box;
     overflow: hidden !important;
+    box-sizing: border-box;
 }
 
 .block-container >
@@ -142,16 +184,11 @@ body,
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    gap: 6px !important;
+    gap: 8px !important;
 }
 
 [data-testid="stVerticalBlock"] {
     gap: 6px !important;
-}
-
-[data-testid="stElementContainer"] {
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
 [data-testid="stHorizontalBlock"] {
@@ -163,9 +200,9 @@ body,
     min-height: 0;
 }
 
-[data-testid="stWidgetLabel"] p {
-    color: #E2E8F0;
-    font-size: 12px;
+[data-testid="stElementContainer"] {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 [data-testid="stWidgetLabel"] {
@@ -173,135 +210,119 @@ body,
     margin-bottom: 0 !important;
 }
 
+[data-testid="stWidgetLabel"] p {
+    color: #E2E8F0;
+    font-size: calc(13 * var(--ui));
+}
+
+.stMarkdown p {
+    margin-bottom: 0;
+}
+
 
 /* =========================================================
-   APPLICATION HEADER
+   HEADER
    ========================================================= */
 
 .hero {
     text-align: center;
-    padding: 0 0 4px;
+    padding: 2px 0 5px;
 }
 
 .hero-label {
     color: #22D3EE;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 4px;
-    margin-bottom: 3px;
+    font-size: calc(10 * var(--ui));
+    font-weight: 800;
+    letter-spacing: 5px;
 }
 
 .hero-title {
     color: #E0F2FE;
-    font-size: clamp(24px, 4dvh, 34px);
+    font-size: calc(36 * var(--ui));
     font-weight: 900;
-    letter-spacing: 5px;
-    line-height: 1.1;
-    margin-bottom: 4px;
-    text-shadow: 0 0 22px #0891B2;
+    letter-spacing: 6px;
+    line-height: 1.15;
+    margin: 4px 0;
+    text-shadow: 0 0 24px #0891B2;
 }
 
 .hero-subtitle {
     color: #94A3B8;
-    font-size: 9px;
+    font-size: calc(10 * var(--ui));
     letter-spacing: 3px;
+}
+
+.mode-label {
+    display: inline-block;
+    padding: 3px 12px;
+    margin-top: 5px;
+    border: 1px solid #155E75;
+    border-radius: 20px;
+    color: #67E8F9;
+    background: rgba(34,211,238,0.08);
+    font-size: calc(10 * var(--ui));
+    font-weight: 800;
+    letter-spacing: 1.5px;
 }
 
 
 /* =========================================================
-   WELCOME SCREEN
+   MAIN MENU
    ========================================================= */
 
 .st-key-welcome_screen {
     width: 100%;
-    max-width: 720px;
+    max-width: 850px;
 
     margin: auto !important;
-    padding: 16px 24px !important;
+    padding: 18px 28px !important;
 
-    background: rgba(8, 13, 28, 0.96);
+    background: rgba(8,13,28,0.97);
 
     border: 1px solid #164E63;
     border-radius: 18px;
 
-    box-shadow:
-        0 0 45px rgba(34, 211, 238, 0.10);
+    box-shadow: 0 0 45px rgba(34,211,238,0.12);
 
     box-sizing: border-box;
-}
-
-.welcome-label {
-    color: #22D3EE;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 4px;
-    text-align: center;
-    margin-bottom: 6px;
-}
-
-.welcome-title {
-    color: #E0F2FE;
-    font-size: clamp(25px, 4dvh, 38px);
-    font-weight: 900;
-    letter-spacing: 4px;
-    line-height: 1.2;
-    text-align: center;
-    text-shadow: 0 0 24px #0891B2;
-}
-
-.welcome-subtitle {
-    color: #94A3B8;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-align: center;
-    margin: 6px 0;
 }
 
 .welcome-mountain {
     display: block;
     width: 100%;
-    max-width: 440px;
     height: 15dvh;
-    max-height: 115px;
+    max-height: 145px;
     object-fit: contain;
     margin: 0 auto;
 }
 
 .welcome-mission {
     color: #FBBF24;
-    font-size: 17px;
+    font-size: calc(19 * var(--ui));
     font-weight: 800;
     letter-spacing: 2px;
     text-align: center;
     margin: 4px 0;
 }
 
-.welcome-mission-text {
+.welcome-text {
     color: #CBD5E1;
-    font-size: 12px;
+    text-align: center;
+    font-size: calc(13 * var(--ui));
     line-height: 1.4;
-    text-align: center;
-    margin-bottom: 8px;
-}
-
-.instructions-heading {
-    color: #67E8F9;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-align: center;
-    margin-bottom: 6px;
 }
 
 .instruction-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 7px 10px;
-    margin-bottom: 5px;
+    gap: 12px;
+
+    background: #111827;
     border: 1px solid #29384C;
     border-radius: 9px;
-    background: rgba(17, 24, 39, 0.90);
+
+    padding: 8px 12px;
+    margin-bottom: 5px;
 }
 
 .instruction-number {
@@ -313,76 +334,92 @@ body,
     height: 32px;
     flex-shrink: 0;
 
+    color: #22D3EE;
+    background: rgba(34,211,238,0.08);
+
     border: 1px solid #155E75;
     border-radius: 8px;
 
-    background: rgba(34, 211, 238, 0.08);
-    color: #22D3EE;
-
-    font-size: 14px;
     font-weight: 800;
-}
-
-.instruction-content {
-    flex: 1;
-    min-width: 0;
 }
 
 .instruction-title {
     color: #E2E8F0;
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 2px;
+    font-size: calc(13 * var(--ui));
+    font-weight: 800;
 }
 
 .instruction-text {
     color: #94A3B8;
-    font-size: 11px;
+    font-size: calc(11 * var(--ui));
     line-height: 1.35;
 }
 
-.st-key-start_game_button button {
-    min-height: 38px !important;
-    font-weight: 800 !important;
-    letter-spacing: 2px;
+.mode-card {
+    min-height: 92px;
+    padding: 10px 12px;
 
-    background: linear-gradient(
-        90deg,
-        #155E75,
-        #0E7490
-    ) !important;
+    background: #111827;
+    border: 1px solid #29384C;
+    border-radius: 10px;
 
-    border: 1px solid #22D3EE !important;
-    color: #FFFFFF !important;
+    box-sizing: border-box;
+}
+
+.mode-card-title {
+    font-size: calc(16 * var(--ui));
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.mode-card-text {
+    font-size: calc(12 * var(--ui));
+    color: #CBD5E1;
+    line-height: 1.4;
 }
 
 
 /* =========================================================
-   MAIN DASHBOARD
+   DASHBOARD
    ========================================================= */
 
 .st-key-main_dashboard {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
     flex: 1 1 auto;
-}
-
-.st-key-left_panel
-[data-testid="stVerticalBlock"],
-
-.st-key-right_panel
-[data-testid="stVerticalBlock"] {
-    gap: 6px !important;
+    min-height: 0;
+    width: 100%;
 }
 
 .section-heading {
     color: #67E8F9;
-    font-size: 10px;
+    font-size: calc(11 * var(--ui));
     font-weight: 800;
-    letter-spacing: 1.5px;
-    line-height: 1.2;
-    margin: 0;
+    letter-spacing: 1.6px;
+    line-height: 1.3;
+}
+
+.panel-card {
+    background: rgba(17,24,39,0.95);
+    border: 1px solid #29384C;
+    border-radius: 9px;
+    padding: 8px 11px;
+}
+
+.panel-title {
+    font-size: calc(12 * var(--ui));
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.panel-text {
+    color: #CBD5E1;
+    font-size: calc(12 * var(--ui));
+    line-height: 1.4;
+}
+
+.small-text {
+    color: #94A3B8;
+    font-size: calc(11 * var(--ui));
+    line-height: 1.35;
 }
 
 
@@ -393,49 +430,25 @@ body,
 .st-key-left_panel [role="radiogroup"] {
     display: flex;
     flex-direction: column;
+
     width: 100%;
-    gap: 0;
-    padding: 5px 9px;
+    gap: 1px;
+
+    padding: 7px 10px;
+
+    background: rgba(17,24,39,0.95);
     border: 1px solid #29384C;
     border-radius: 9px;
-    background: rgba(17, 24, 39, 0.85);
-    box-sizing: border-box;
 }
 
 .st-key-left_panel [role="radiogroup"] label {
+    min-height: calc(24 * var(--ui));
     margin: 0 !important;
-    padding: 0 !important;
-    min-height: 23px;
 }
 
 .st-key-left_panel [role="radiogroup"] p {
+    font-size: calc(13 * var(--ui));
     color: #E2E8F0;
-    font-size: 12px;
-    line-height: 1.2;
-}
-
-
-/* =========================================================
-   STRATEGY DESCRIPTION
-   ========================================================= */
-
-.strategy-description {
-    background: rgba(17, 24, 39, 0.94);
-    border: 1px solid #29384C;
-    border-radius: 8px;
-    padding: 7px 10px;
-}
-
-.strategy-description-title {
-    font-size: 11px;
-    font-weight: 700;
-    margin-bottom: 3px;
-}
-
-.strategy-description-text {
-    color: #CBD5E1;
-    font-size: 11px;
-    line-height: 1.35;
 }
 
 
@@ -443,16 +456,9 @@ body,
    SLIDER
    ========================================================= */
 
-.st-key-left_panel
 [data-testid="stSlider"] {
-    padding: 0 !important;
     margin: 0 !important;
-}
-
-.slider-help {
-    color: #94A3B8;
-    font-size: 10px;
-    line-height: 1.35;
+    padding: 0 !important;
 }
 
 
@@ -467,20 +473,20 @@ body,
 
 .stButton > button {
     width: 100%;
-    min-height: 32px !important;
-    padding: 4px 8px !important;
-    margin: 0 !important;
 
-    background: rgba(17, 24, 39, 0.96);
+    min-height: calc(34 * var(--ui)) !important;
+    padding: 4px 9px !important;
+
+    background: rgba(17,24,39,0.96);
     border: 1px solid #29384C;
-    border-radius: 8px;
+    border-radius: 9px;
 
     color: #67E8F9;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .stButton > button p {
-    font-size: 12px;
+    font-size: calc(12 * var(--ui));
     line-height: 1.2;
     margin: 0;
 }
@@ -498,39 +504,8 @@ body,
 }
 
 .stButton > button:disabled {
-    opacity: 0.45;
+    opacity: 0.4;
     cursor: not-allowed;
-}
-
-
-/* =========================================================
-   MISSION OBJECTIVE
-   ========================================================= */
-
-.mission-card {
-    background: rgba(17, 24, 39, 0.78);
-    border: 1px solid #29384C;
-    border-radius: 8px;
-    padding: 7px 10px;
-}
-
-.mission-title {
-    color: #67E8F9;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
-    margin-bottom: 4px;
-}
-
-.mission-text {
-    color: #A8BED3;
-    font-size: 10px;
-    line-height: 1.4;
-}
-
-.mission-target {
-    color: #FBBF24;
-    font-weight: 800;
 }
 
 
@@ -540,60 +515,51 @@ body,
 
 .metric-grid {
     display: grid;
-    grid-template-columns:
-        repeat(5, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 9px;
     width: 100%;
 }
 
 .metric-card {
+    background: rgba(17,24,39,0.96);
+    border: 1px solid #29384C;
+    border-radius: 11px;
+
+    padding: 9px 12px;
+    min-height: calc(65 * var(--ui));
+
     display: flex;
     flex-direction: column;
     justify-content: center;
-
-    background: rgba(17, 24, 39, 0.95);
-    border: 1px solid #29384C;
-    border-radius: 10px;
-
-    padding: 7px 10px;
-    min-width: 0;
-    min-height: 56px;
 
     box-sizing: border-box;
 }
 
 .metric-label {
     color: #94A3B8;
-    font-size: 9px;
+    font-size: calc(10 * var(--ui));
     font-weight: 700;
     letter-spacing: 0.5px;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
 }
 
 .metric-value {
-    font-size: clamp(18px, 2.8dvh, 25px);
-    font-weight: 800;
+    font-size: calc(27 * var(--ui));
+    font-weight: 900;
     line-height: 1.1;
 }
 
-
-/* =========================================================
-   PROGRESS BAR
-   ========================================================= */
-
 .progress-track {
-    width: 100%;
-    height: 4px;
+    height: 5px;
     background: #1E293B;
-    border-radius: 20px;
+    border-radius: 10px;
     overflow: hidden;
-    margin-top: 5px;
+    margin-top: 6px;
 }
 
 .progress-fill {
     height: 100%;
-    border-radius: 20px;
-    transition: width 0.3s ease;
+    border-radius: 10px;
 }
 
 
@@ -605,62 +571,83 @@ body,
     display: block;
     width: 100%;
 
-    height: clamp(150px, 35dvh, 330px);
+    height: clamp(170px,36dvh,430px);
 
-    object-fit: contain;
+    object-fit: fill;
 
     background: #0B1120;
     border: 1px solid #29384C;
-    border-radius: 10px;
+    border-radius: 12px;
+
     box-sizing: border-box;
+}
+
+.practice-image {
+    height: clamp(150px,32dvh,390px);
 }
 
 
 /* =========================================================
-   TARGET STATUS
+   PHASE INDICATOR
+   ========================================================= */
+
+.phase-grid {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 6px;
+}
+
+.phase-card {
+    background: rgba(17,24,39,0.95);
+    border: 1px solid #29384C;
+    border-radius: 7px;
+
+    text-align: center;
+    padding: 6px 5px;
+
+    color: #64748B;
+    font-size: calc(10 * var(--ui));
+    font-weight: 700;
+}
+
+.phase-active {
+    border-color: var(--phase-color);
+    color: var(--phase-color);
+    background: rgba(34,211,238,0.06);
+}
+
+
+/* =========================================================
+   STATUS AND FEEDBACK
    ========================================================= */
 
 .target-status {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 
-    padding: 7px 10px;
-
+    background: rgba(17,24,39,0.95);
     border: 1px solid #29384C;
     border-radius: 8px;
 
-    background: rgba(17, 24, 39, 0.90);
-    font-size: 10px;
+    padding: 8px 11px;
+
+    font-size: calc(11 * var(--ui));
+    font-weight: 700;
 }
-
-.target-status-label {
-    color: #94A3B8;
-    font-weight: 600;
-}
-
-.target-status-value {
-    font-weight: 800;
-    letter-spacing: 0.7px;
-}
-
-
-/* =========================================================
-   LIVE FEEDBACK
-   ========================================================= */
 
 .feedback-box {
-    background: rgba(17, 24, 39, 0.96);
+    background: rgba(17,24,39,0.96);
     border: 1px solid #29384C;
     border-left: 4px solid #FBBF24;
     border-radius: 9px;
-    padding: 8px 10px;
+
+    padding: 8px 12px;
 }
 
 .feedback-title {
-    color: #FBBF24;
-    font-size: 10px;
+    font-size: calc(11 * var(--ui));
     font-weight: 800;
     letter-spacing: 1.5px;
     margin-bottom: 4px;
@@ -668,68 +655,73 @@ body,
 
 .feedback-text {
     color: #E2E8F0;
-    font-size: 11px;
-    line-height: 1.4;
+    font-size: calc(12 * var(--ui));
+    line-height: 1.35;
 }
 
-.feedback-success {
-    border-left-color: #22C55E;
+.preview-box {
+    background: rgba(17,24,39,0.96);
+    border: 1px solid #29384C;
+    border-left: 4px solid #22D3EE;
+    border-radius: 9px;
+    padding: 8px 12px;
 }
 
-.feedback-success .feedback-title {
-    color: #4ADE80;
+.preview-title {
+    font-size: calc(11 * var(--ui));
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
 }
 
-.feedback-failed {
-    border-left-color: #EF4444;
+.preview-value {
+    font-size: calc(18 * var(--ui));
+    font-weight: 900;
+    line-height: 1.2;
 }
 
-.feedback-failed .feedback-title {
-    color: #F87171;
+.preview-text {
+    color: #CBD5E1;
+    font-size: calc(11 * var(--ui));
+    line-height: 1.3;
 }
 
 
 /* =========================================================
-   BOTTOM NAVIGATION
+   FOOTER
    ========================================================= */
 
 .st-key-bottom_navigation {
     width: 100%;
     flex: 0 0 auto;
-    border-top: 1px solid #29384C;
-    padding-top: 7px;
     margin-top: auto !important;
-}
 
-.st-key-bottom_navigation
-[data-testid="stHorizontalBlock"] {
-    gap: 10px !important;
+    padding-top: 8px;
+    border-top: 1px solid #29384C;
 }
 
 
 /* =========================================================
-   FIXED POP-UP DIALOGS
+   POP-UP DIALOGS
    ========================================================= */
 
 [data-testid="stDialog"] {
     overflow: hidden !important;
-    overscroll-behavior: none !important;
 }
 
 [data-testid="stDialog"] [role="dialog"] {
-    width: min(1050px, 94vw) !important;
+    width: min(1000px,94vw) !important;
     max-width: 94vw !important;
     max-height: 92dvh !important;
-
-    overflow: hidden !important;
-    overscroll-behavior: none !important;
 
     background: #0B1120 !important;
     color: #E2E8F0;
 
     border: 1px solid #29384C;
     border-radius: 16px;
-    box-sizing: border-box;
+
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
 }
 
 [data-testid="stDialog"]
@@ -739,32 +731,17 @@ body,
 
 [data-testid="stDialog"]
 [data-testid="stVerticalBlock"] {
-    gap: 6px !important;
+    gap: 7px !important;
 }
 
-[data-testid="stDialog"]
-[data-testid="stElementContainer"] {
+[data-testid="stDialog"] h2 {
+    font-size: calc(21 * var(--ui)) !important;
     margin: 0 !important;
-    padding: 0 !important;
-}
-
-[data-testid="stDialog"] h1,
-[data-testid="stDialog"] h2,
-[data-testid="stDialog"] h3 {
-    font-size: 19px !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
 [data-testid="stDialog"] p {
-    font-size: 12px;
+    font-size: calc(12 * var(--ui));
     line-height: 1.4;
-}
-
-[data-testid="stDialog"]
-.stButton > button {
-    min-height: 32px !important;
-    padding: 4px 10px !important;
 }
 
 
@@ -775,119 +752,68 @@ body,
 .result-container {
     width: 100%;
     text-align: center;
-    padding: 12px 16px;
-    border-radius: 15px;
+
+    padding: 16px;
+    border-radius: 14px;
+
+    background: #080D1C;
     box-sizing: border-box;
 }
 
 .result-success {
     border: 1px solid #22C55E;
-
-    background:
-        radial-gradient(
-            ellipse at top,
-            rgba(34, 197, 94, 0.15),
-            transparent 70%
-        ),
-        #080D1C;
-
-    box-shadow:
-        0 0 35px rgba(34, 197, 94, 0.15);
+    box-shadow: 0 0 35px rgba(34,197,94,0.15);
 }
 
 .result-failed {
     border: 1px solid #EF4444;
-
-    background:
-        radial-gradient(
-            ellipse at top,
-            rgba(239, 68, 68, 0.15),
-            transparent 70%
-        ),
-        #080D1C;
-
-    box-shadow:
-        0 0 35px rgba(239, 68, 68, 0.15);
+    box-shadow: 0 0 35px rgba(239,68,68,0.15);
 }
 
 .result-icon {
-    font-size: clamp(35px, 8dvh, 65px);
+    font-size: clamp(35px,9dvh,75px);
     line-height: 1.1;
-    margin-bottom: 5px;
-    animation: resultAppear 0.5s ease-out;
-}
-
-@keyframes resultAppear {
-    from {
-        opacity: 0;
-        transform: scale(0.65);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.result-title {
-    font-size: clamp(24px, 4.8dvh, 42px);
-    font-weight: 900;
-    letter-spacing: 3px;
-    line-height: 1.2;
     margin-bottom: 6px;
 }
 
-.result-success .result-title {
-    color: #4ADE80;
-    text-shadow:
-        0 0 24px rgba(34, 197, 94, 0.35);
-}
-
-.result-failed .result-title {
-    color: #F87171;
-    text-shadow:
-        0 0 24px rgba(239, 68, 68, 0.35);
+.result-title {
+    font-size: clamp(26px,5dvh,46px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    line-height: 1.2;
+    margin-bottom: 8px;
 }
 
 .result-description {
     color: #CBD5E1;
-    font-size: 12px;
+    font-size: calc(14 * var(--ui));
     line-height: 1.4;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .result-grid {
     display: grid;
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4,minmax(0,1fr));
     gap: 8px;
-    margin-bottom: 10px;
 }
 
 .result-stat {
     background: #111827;
     border: 1px solid #29384C;
-    border-radius: 10px;
-    padding: 8px;
+    border-radius: 9px;
+    padding: 10px;
 }
 
 .result-stat-label {
     color: #94A3B8;
-    font-size: 9px;
+    font-size: calc(10 * var(--ui));
     font-weight: 700;
-    margin-bottom: 4px;
 }
 
 .result-stat-value {
     color: #E2E8F0;
-    font-size: 23px;
-    font-weight: 800;
-}
-
-.result-strategy {
-    font-size: 16px;
-    font-weight: 800;
-    margin-bottom: 4px;
+    font-size: calc(25 * var(--ui));
+    font-weight: 900;
 }
 
 .result-reason {
@@ -895,34 +821,20 @@ body,
     background: #111827;
     border: 1px solid #29384C;
     border-radius: 9px;
-    padding: 8px 12px;
-    margin-top: 8px;
-}
-
-.result-reason-title {
-    color: #FBBF24;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.3px;
-    margin-bottom: 4px;
-}
-
-.result-reason-text {
-    color: #CBD5E1;
-    font-size: 12px;
-    line-height: 1.4;
+    padding: 10px 12px;
+    margin-top: 10px;
 }
 
 
 /* =========================================================
-   PERFORMANCE ANALYSIS
+   PERFORMANCE AND TABLES
    ========================================================= */
 
 .analysis-image {
     display: block;
     width: 100%;
     height: 29dvh;
-    max-height: 260px;
+    max-height: 280px;
     object-fit: contain;
 
     background: #080D1C;
@@ -930,121 +842,68 @@ body,
     border-radius: 9px;
 }
 
-.dialog-description {
-    color: #94A3B8;
-    font-size: 11px;
-    line-height: 1.4;
-    margin: 3px 0;
-}
-
-.dialog-heading {
-    color: #67E8F9;
-    font-size: 13px;
-    font-weight: 800;
-    margin: 4px 0;
-}
-
-
-/* =========================================================
-   STATIC TABLES — NO SCROLL
-   ========================================================= */
-
 .static-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
 
     background: #111827;
-    border: 1px solid #29384C;
     color: #E2E8F0;
 
-    font-size: 11px;
+    font-size: calc(11 * var(--ui));
 }
 
 .static-table th {
-    background: #1E293B;
     color: #67E8F9;
-    font-weight: 700;
+    background: #1E293B;
     padding: 7px 4px;
-    border-bottom: 1px solid #334155;
+    border: 1px solid #334155;
     text-align: center;
     overflow-wrap: anywhere;
 }
 
 .static-table td {
     padding: 7px 4px;
-    border-bottom: 1px solid #29384C;
+    border: 1px solid #29384C;
     text-align: center;
     overflow-wrap: anywhere;
 }
-
-.static-table tbody tr:nth-child(even) {
-    background: rgba(30, 41, 59, 0.4);
-}
-
-.table-page {
-    color: #94A3B8;
-    font-size: 11px;
-    text-align: center;
-    padding: 4px;
-}
-
-
-/* =========================================================
-   LEARNING GUIDE
-   ========================================================= */
 
 .guide-card {
     background: #111827;
     border: 1px solid #29384C;
     border-radius: 10px;
-    padding: 14px;
-    margin: 4px 0;
+    padding: 12px;
 }
 
 .guide-title {
-    font-size: 19px;
+    font-size: calc(20 * var(--ui));
     font-weight: 800;
     margin-bottom: 8px;
-}
-
-.guide-description {
-    color: #CBD5E1;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 10px;
 }
 
 .guide-point {
     background: #080D1C;
     border-left: 3px solid #22D3EE;
     border-radius: 5px;
+
     color: #E2E8F0;
-    font-size: 12px;
+    font-size: calc(12 * var(--ui));
     line-height: 1.4;
+
     padding: 8px 10px;
     margin-bottom: 6px;
 }
 
-.guide-example {
-    background: rgba(251, 191, 36, 0.06);
-    border: 1px solid #854D0E;
-    border-radius: 8px;
-    padding: 8px 10px;
-    color: #FBBF24;
-    font-size: 12px;
-    line-height: 1.4;
-}
-
 
 /* =========================================================
-   COMPACT LAPTOP SCREEN
+   SHORT DESKTOP / LAPTOP
    ========================================================= */
 
-@media (max-height: 800px) {
+@media (max-height: 780px) {
 
     .block-container {
-        padding: 8px 20px !important;
+        padding: 7px 20px 8px !important;
     }
 
     [data-testid="stVerticalBlock"] {
@@ -1052,624 +911,109 @@ body,
     }
 
     .hero-title {
-        font-size: 27px;
+        font-size: 30px;
+    }
+
+    .hero {
+        padding-bottom: 3px;
+    }
+
+    .fitness-image {
+        height: 34dvh;
+    }
+
+    .practice-image {
+        height: 29dvh;
+    }
+
+    .metric-card {
+        min-height: 53px;
+        padding: 7px 10px;
+    }
+
+    .panel-card,
+    .feedback-box,
+    .preview-box {
+        padding: 6px 9px;
+    }
+
+    .stButton > button {
+        min-height: 29px !important;
+    }
+
+    .instruction-row {
+        padding: 5px 9px;
+    }
+
+    .mode-card {
+        min-height: 76px;
+    }
+}
+
+@media (max-height: 650px) {
+
+    :root {
+        --ui: 0.8px;
+    }
+
+    .hero-title {
+        font-size: 24px;
     }
 
     .hero-label,
     .hero-subtitle {
         font-size: 8px;
-    }
-
-    .metric-card {
-        min-height: 48px;
-        padding: 6px 9px;
-    }
-
-    .metric-value {
-        font-size: 21px;
-    }
-
-    .fitness-image {
-        height: 33dvh;
-    }
-
-    .stButton > button {
-        min-height: 29px !important;
-        padding: 3px 7px !important;
-    }
-
-    .strategy-description,
-    .mission-card,
-    .feedback-box {
-        padding: 6px 8px;
-    }
-
-    .result-container {
-        padding: 10px 12px;
-    }
-
-    .guide-card {
-        padding: 10px;
-    }
-
-    .guide-point {
-        padding: 6px 8px;
-        margin-bottom: 4px;
-    }
-}
-
-
-/* =========================================================
-   SHORT DESKTOP SCREEN
-   ========================================================= */
-
-@media (max-height: 650px) {
-
-    .block-container {
-        padding: 5px 16px !important;
-    }
-
-    .hero-title {
-        font-size: 23px;
-    }
-
-    .hero-label,
-    .hero-subtitle {
-        font-size: 7px;
     }
 
     .fitness-image {
         height: 29dvh;
     }
 
+    .practice-image {
+        height: 25dvh;
+    }
+
     .metric-card {
         min-height: 42px;
-        padding: 4px 7px;
-    }
-
-    .metric-value {
-        font-size: 18px;
-    }
-
-    .st-key-left_panel
-    [data-testid="stVerticalBlock"] {
-        gap: 3px !important;
-    }
-
-    .st-key-left_panel
-    [role="radiogroup"] label {
-        min-height: 19px;
+        padding: 5px 7px;
     }
 
     .stButton > button {
-        min-height: 26px !important;
+        min-height: 25px !important;
+        padding: 2px 6px !important;
     }
 
     .welcome-mountain {
-        max-height: 75px;
-    }
-
-    .instruction-row {
-        padding: 4px 8px;
-        margin-bottom: 3px;
-    }
-
-    .result-icon {
-        font-size: 36px;
-    }
-
-    .result-title {
-        font-size: 25px;
-    }
-
-    .result-stat-value {
-        font-size: 19px;
+        max-height: 70px;
     }
 
     .static-table td,
     .static-table th {
         padding: 4px 3px;
     }
-
-    .guide-title {
-        font-size: 16px;
-    }
-
-    .guide-description,
-    .guide-point,
-    .guide-example {
-        font-size: 11px;
-    }
 }
-
-
-/* =========================================================
-   NARROW SCREEN
-   ========================================================= */
 
 @media (max-width: 1100px) {
 
     .block-container {
-        padding: 8px 12px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
     }
 
     .metric-grid {
-        gap: 4px;
+        gap: 5px;
     }
 
     .metric-card {
-        padding: 5px;
+        padding: 6px;
     }
 
     .metric-label {
-        font-size: 8px;
-    }
-
-    .metric-value {
-        font-size: 18px;
-    }
-
-    .target-status {
         font-size: 9px;
     }
-}
-
-
-/* =========================================================
-   MOBILE FALLBACK
-   ========================================================= */
-
-@media (max-width: 767px) {
-
-    html,
-    body,
-    #root,
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stMain"] {
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: auto !important;
-    }
-
-    .block-container {
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-    }
-
-    .metric-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    [data-testid="stDialog"] [role="dialog"],
-    [data-testid="stDialog"] [role="dialog"] > div {
-        overflow-y: auto !important;
-    }
-}
-
-/* =========================================================
-   FULL SCREEN RESPONSIVE DASHBOARD
-   ========================================================= */
-
-@media (min-width: 1100px) and (min-height: 680px) {
-
-    :root {
-        --ui-scale: clamp(0.9px, 0.14dvh, 1.4px);
-    }
-
-    html,
-    body,
-    #root,
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stMain"] {
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        overflow: hidden !important;
-    }
-
-    /* MAIN SCREEN */
-
-    .block-container {
-        width: 100% !important;
-        max-width: none !important;
-
-        height: 100dvh !important;
-
-        padding: 12px 24px 16px !important;
-
-        box-sizing: border-box;
-        overflow: hidden !important;
-    }
-
-    .block-container >
-    [data-testid="stVerticalBlock"] {
-        display: flex !important;
-        flex-direction: column !important;
-
-        height: 100% !important;
-        min-height: 0 !important;
-
-        gap: 10px !important;
-    }
-
-
-    /* =====================================================
-       HEADER
-       ===================================================== */
-
-    .hero {
-        padding: 2px 0 10px;
-    }
-
-    .hero-label {
-        font-size: calc(10 * var(--ui-scale));
-        letter-spacing: 5px;
-        margin-bottom: 5px;
-    }
-
-    .hero-title {
-        font-size: calc(36 * var(--ui-scale));
-        letter-spacing: 6px;
-        line-height: 1.1;
-        margin-bottom: 5px;
-    }
-
-    .hero-subtitle {
-        font-size: calc(10 * var(--ui-scale));
-        letter-spacing: 4px;
-    }
-
-
-    /* =====================================================
-       MAIN DASHBOARD
-       ===================================================== */
-
-    .st-key-main_dashboard {
-        flex: 1 1 auto !important;
-        min-height: 0 !important;
-        width: 100% !important;
-    }
-
-    .st-key-main_dashboard
-    [data-testid="stHorizontalBlock"] {
-        gap: 18px !important;
-    }
-
-    .st-key-left_panel
-    [data-testid="stVerticalBlock"],
-
-    .st-key-right_panel
-    [data-testid="stVerticalBlock"] {
-        gap: 8px !important;
-    }
-
-    .section-heading {
-        font-size: calc(11 * var(--ui-scale));
-        letter-spacing: 1.6px;
-        line-height: 1.3;
-    }
-
-
-    /* =====================================================
-       PARAMETER CONTROL
-       ===================================================== */
-
-    .st-key-left_panel [role="radiogroup"] {
-        width: 100% !important;
-        padding: 9px 12px !important;
-        gap: 3px !important;
-    }
-
-    .st-key-left_panel
-    [role="radiogroup"] label {
-        min-height: calc(25 * var(--ui-scale));
-    }
-
-    .st-key-left_panel
-    [role="radiogroup"] p {
-        font-size: calc(13 * var(--ui-scale));
-        line-height: 1.3;
-    }
-
-    .strategy-description {
-        padding: 10px 12px;
-        border-radius: 10px;
-    }
-
-    .strategy-description-title {
-        font-size: calc(12 * var(--ui-scale));
-        margin-bottom: 5px;
-    }
-
-    .strategy-description-text {
-        font-size: calc(12 * var(--ui-scale));
-        line-height: 1.4;
-    }
-
-
-    /* =====================================================
-       INITIAL STEP SIZE
-       ===================================================== */
-
-    [data-testid="stWidgetLabel"] p {
-        font-size: calc(13 * var(--ui-scale));
-    }
-
-    .st-key-left_panel
-    [data-testid="stSlider"] {
-        padding: 2px 0 !important;
-    }
-
-    .slider-help {
-        font-size: calc(11 * var(--ui-scale));
-        line-height: 1.4;
-    }
-
-
-    /* =====================================================
-       SIMULATION BUTTONS
-       ===================================================== */
-
-    .stButton > button {
-        min-height: calc(35 * var(--ui-scale)) !important;
-
-        padding: 6px 12px !important;
-
-        border-radius: 9px;
-    }
-
-    .stButton > button p {
-        font-size: calc(12 * var(--ui-scale));
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-
-    /* =====================================================
-       MISSION OBJECTIVE
-       ===================================================== */
-
-    .mission-card {
-        padding: 10px 12px;
-        border-radius: 10px;
-    }
-
-    .mission-title {
-        font-size: calc(10 * var(--ui-scale));
-        margin-bottom: 6px;
-    }
-
-    .mission-text {
-        font-size: calc(11 * var(--ui-scale));
-        line-height: 1.5;
-    }
-
-
-    /* =====================================================
-       METRIC CARDS
-       ===================================================== */
-
-    .metric-grid {
-        grid-template-columns:
-            repeat(5, minmax(0, 1fr));
-
-        gap: 10px;
-    }
-
-    .metric-card {
-        min-height: calc(68 * var(--ui-scale));
-
-        padding: 10px 14px;
-
-        border-radius: 12px;
-    }
-
-    .metric-label {
-        font-size: calc(10 * var(--ui-scale));
-        margin-bottom: 6px;
-    }
 
     .metric-value {
-        font-size: calc(28 * var(--ui-scale));
-        line-height: 1.1;
-    }
-
-    .progress-track {
-        height: 5px;
-        margin-top: 6px;
-    }
-
-
-    /* =====================================================
-       FITNESS LANDSCAPE
-       ===================================================== */
-
-    .fitness-image {
-        display: block;
-
-        width: 100% !important;
-
-        height: clamp(220px, 40dvh, 480px) !important;
-
-        max-height: none !important;
-
-        object-fit: fill !important;
-
-        border-radius: 12px;
-
-        box-sizing: border-box;
-    }
-
-
-    /* =====================================================
-       TARGET STATUS
-       ===================================================== */
-
-    .target-status {
-        min-height: 35px;
-
-        padding: 8px 12px;
-
-        border-radius: 9px;
-
-        font-size: calc(11 * var(--ui-scale));
-    }
-
-
-    /* =====================================================
-       LIVE EVOLUTION FEEDBACK
-       ===================================================== */
-
-    .feedback-box {
-        padding: 10px 14px;
-
-        min-height: 60px;
-
-        border-radius: 10px;
-    }
-
-    .feedback-title {
-        font-size: calc(11 * var(--ui-scale));
-        margin-bottom: 6px;
-    }
-
-    .feedback-text {
-        font-size: calc(12 * var(--ui-scale));
-        line-height: 1.4;
-    }
-
-
-    /* =====================================================
-       BOTTOM NAVIGATION
-       ===================================================== */
-
-    .st-key-bottom_navigation {
-        width: 100% !important;
-
-        flex: 0 0 auto !important;
-
-        margin-top: auto !important;
-
-        padding-top: 10px !important;
-        padding-bottom: 4px !important;
-    }
-
-    .st-key-bottom_navigation
-    [data-testid="stHorizontalBlock"] {
-        gap: 12px !important;
-    }
-
-    .st-key-bottom_navigation
-    .stButton > button {
-        min-height: calc(38 * var(--ui-scale)) !important;
-    }
-
-
-    /* =====================================================
-       WELCOME SCREEN
-       ===================================================== */
-
-    .st-key-welcome_screen {
-        max-width: 850px;
-
-        padding: 22px 30px !important;
-    }
-
-    .welcome-title {
-        font-size: calc(40 * var(--ui-scale));
-    }
-
-    .welcome-subtitle {
-        font-size: calc(11 * var(--ui-scale));
-    }
-
-    .welcome-mountain {
-        height: 17dvh;
-        max-height: 160px;
-        max-width: 550px;
-    }
-
-    .welcome-mission {
-        font-size: calc(19 * var(--ui-scale));
-    }
-
-    .welcome-mission-text {
-        font-size: calc(13 * var(--ui-scale));
-    }
-
-    .instruction-row {
-        padding: 10px 14px;
-    }
-
-    .instruction-title {
-        font-size: calc(13 * var(--ui-scale));
-    }
-
-    .instruction-text {
-        font-size: calc(12 * var(--ui-scale));
-    }
-
-}
-
-
-/* =========================================================
-   SHORT LAPTOP SCREEN
-   ========================================================= */
-
-@media (min-width: 1100px) and (max-height: 780px) {
-
-    .block-container {
-        padding: 8px 22px 10px !important;
-    }
-
-    .hero {
-        padding-bottom: 5px;
-    }
-
-    .hero-title {
-        font-size: 32px;
-    }
-
-    .st-key-left_panel
-    [data-testid="stVerticalBlock"],
-
-    .st-key-right_panel
-    [data-testid="stVerticalBlock"] {
-        gap: 5px !important;
-    }
-
-    .fitness-image {
-        height: 37dvh !important;
-    }
-
-    .metric-card {
-        min-height: 58px;
-        padding: 8px 12px;
-    }
-
-    .metric-value {
-        font-size: 25px;
-    }
-
-    .strategy-description,
-    .mission-card,
-    .feedback-box {
-        padding: 7px 10px;
-    }
-
-    .stButton > button {
-        min-height: 32px !important;
-    }
-
-    .feedback-box {
-        min-height: 0;
-    }
-
-    .st-key-bottom_navigation {
-        padding-top: 6px !important;
+        font-size: 20px;
     }
 }
 
@@ -1685,76 +1029,16 @@ st.html(
 
 
 # ============================================================
-# 04. SIMULATION CONSTANTS
-# ============================================================
-
-MAX_GENERATIONS = 30
-POPULATION_SIZE = 5
-
-MIN_SIGMA = 0.5
-MAX_SIGMA = 50.0
-
-MIN_POSITION = 0
-MAX_POSITION = 100
-
-INITIAL_POSITION = 10
-
-LOCAL_OPTIMUM = 27
-GLOBAL_OPTIMUM = 79
-
-TARGET_POSITION = GLOBAL_OPTIMUM
-TARGET_FITNESS = 100.0
-
-SIMULATION_VERSION = "exact_peak_overshoot_v4"
-
-HISTORY_PAGE_SIZE = 5
-
-
-STRATEGIES = {
-
-    "Deterministic": {
-        "icon": "⏱️",
-        "color": "#22D3EE",
-        "description": (
-            "Step size decreases according to "
-            "a predefined generation schedule."
-        )
-    },
-
-    "Adaptive": {
-        "icon": "⚡",
-        "color": "#FBBF24",
-        "description": (
-            "Step size changes according to mutation "
-            "success using the 1/5 Success Rule."
-        )
-    },
-
-    "Self-Adaptive": {
-        "icon": "🧬",
-        "color": "#E879F9",
-        "description": (
-            "Each individual evolves its own "
-            "mutation step size."
-        )
-    }
-}
-
-
-# ============================================================
 # 05. FITNESS FUNCTION
 # ============================================================
 
 def fitness(x):
 
     return (
-
         25
-
         + 40 * np.exp(
             -((x - LOCAL_OPTIMUM) / 13) ** 2
         )
-
         + 75 * np.exp(
             -((x - GLOBAL_OPTIMUM) / 15) ** 2
         )
@@ -1762,252 +1046,119 @@ def fitness(x):
 
 
 # ============================================================
-# 06. INITIALIZE APPLICATION STATE
+# 06. SESSION STATE
 # ============================================================
 
+S = st.session_state
+
 DEFAULT_STATE = {
-
     "game_started": False,
-
+    "game_mode": "Practice",
     "selected_strategy": "Deterministic",
-
     "initial_sigma": 15,
-
+    "manual_sigma": 20.0,
     "active_dialog": None,
-
-    "history_page": 0
+    "history_page": 0,
+    "guide_topic": "Manual Control"
 }
-
 
 for key, value in DEFAULT_STATE.items():
 
-    if key not in st.session_state:
-
-        st.session_state[key] = value
+    if key not in S:
+        S[key] = value
 
 
 # ============================================================
 # 07. RESET SIMULATION
 # ============================================================
 
-def reset_simulation(
-    strategy=None,
-    initial_sigma=None
-):
+def reset_simulation():
 
-    if strategy is None:
+    strategy = (
+        "Manual"
+        if S.game_mode == "Practice"
+        else S.selected_strategy
+    )
 
-        strategy = (
-            st.session_state.selected_strategy
-        )
+    sigma = float(
+        S.manual_sigma
+        if S.game_mode == "Practice"
+        else S.initial_sigma
+    )
 
-    if initial_sigma is None:
+    S.settings = (strategy, sigma)
 
-        initial_sigma = (
-            st.session_state.initial_sigma
-        )
+    S.generation = 0
 
-    initial_sigma = float(initial_sigma)
-
-    st.session_state.generation = 0
-
-    st.session_state.population = [
-
-        (INITIAL_POSITION, initial_sigma)
-
+    S.population = [
+        (INITIAL_POSITION, sigma)
         for _ in range(POPULATION_SIZE)
     ]
 
-    st.session_state.sigma = initial_sigma
+    S.sigma = sigma
 
-    st.session_state.history = [
-        float(fitness(INITIAL_POSITION))
-    ]
+    # Same random sequence after every reset.
+    S.random_draws = np.random.default_rng(
+        RANDOM_SEED
+    ).normal(
+        size=(
+            MAX_GENERATIONS,
+            2,
+            POPULATION_SIZE
+        )
+    )
 
-    st.session_state.sigma_history = [
-        initial_sigma
-    ]
+    S.history = [{
+        "Generation": 0,
+        "Position": INITIAL_POSITION,
+        "Fitness": float(fitness(INITIAL_POSITION)),
+        "Sigma": sigma,
+        "Distance": TARGET_POSITION - INITIAL_POSITION,
+        "Success Rate": None,
+        "Action": "Start"
+    }]
 
-    st.session_state.position_history = [
-        INITIAL_POSITION
-    ]
+    S.last_mutations = []
+    S.last_offspring = []
 
-    st.session_state.distance_history = [
-        abs(TARGET_POSITION - INITIAL_POSITION)
-    ]
+    S.game_finished = False
+    S.mission_success = False
+    S.mission_failed = False
 
-    st.session_state.success_history = [0.0]
+    S.failure_type = None
 
-    st.session_state.last_mutations = []
+    S.final_position = None
+    S.final_sigma = None
+    S.trigger_parent = None
+    S.trigger_individual = None
 
-    st.session_state.last_offspring = []
+    S.active_dialog = None
+    S.history_page = 0
 
-    st.session_state.mission_success = False
-
-    st.session_state.mission_failed = False
-
-    st.session_state.game_finished = False
-
-    st.session_state.success_generation = None
-
-    st.session_state.failure_generation = None
-
-    st.session_state.failure_type = None
-
-    st.session_state.final_position = None
-
-    st.session_state.final_sigma = None
-
-    st.session_state.trigger_individual = None
-
-    st.session_state.trigger_parent_position = None
-
-    st.session_state.overshoot_count = 0
-
-    st.session_state.result_shown = False
-
-    st.session_state.active_dialog = None
-
-    st.session_state.history_page = 0
-
-    st.session_state.feedback = (
-
+    S.feedback = (
         "Your population starts at position 10. "
-        "Reach exactly position 79 to win. "
-        "Overshooting the target causes immediate failure."
+        "Reach exactly position 79 within 30 turns."
     )
 
-    st.session_state.settings = (
-        strategy,
-        initial_sigma
-    )
+    S.simulation_version = SIMULATION_VERSION
 
-    st.session_state.simulation_version = (
-        SIMULATION_VERSION
-    )
+
+if (
+    S.get("simulation_version")
+    != SIMULATION_VERSION
+):
+
+    reset_simulation()
 
 
 # ============================================================
-# 08. VALIDATE SIMULATION STATE
-# ============================================================
-
-def initialize_simulation():
-
-    required_keys = [
-
-        "generation",
-        "population",
-        "sigma",
-        "history",
-        "sigma_history",
-        "position_history",
-        "distance_history",
-        "success_history",
-        "last_mutations",
-        "last_offspring",
-        "feedback",
-        "settings",
-        "mission_success",
-        "mission_failed",
-        "game_finished",
-        "success_generation",
-        "failure_generation",
-        "failure_type",
-        "final_position",
-        "final_sigma",
-        "trigger_individual",
-        "trigger_parent_position",
-        "overshoot_count",
-        "result_shown",
-        "simulation_version"
-    ]
-
-    if any(
-        key not in st.session_state
-        for key in required_keys
-    ):
-
-        reset_simulation()
-        return
-
-    if (
-        st.session_state.simulation_version
-        != SIMULATION_VERSION
-    ):
-
-        reset_simulation()
-        return
-
-    current_settings = (
-
-        st.session_state.selected_strategy,
-
-        float(st.session_state.initial_sigma)
-    )
-
-    if st.session_state.settings != current_settings:
-
-        reset_simulation()
-        return
-
-    if len(
-        st.session_state.population
-    ) != POPULATION_SIZE:
-
-        reset_simulation()
-        return
-
-    generation = st.session_state.generation
-
-    if not 0 <= generation <= MAX_GENERATIONS:
-
-        reset_simulation()
-        return
-
-    history_keys = [
-
-        "history",
-        "sigma_history",
-        "position_history",
-        "distance_history",
-        "success_history"
-    ]
-
-    if any(
-
-        len(st.session_state[key]) != generation + 1
-
-        for key in history_keys
-    ):
-
-        reset_simulation()
-        return
-
-    if any(
-
-        not float(x).is_integer()
-
-        or not MIN_POSITION <= x <= MAX_POSITION
-
-        for x, _ in st.session_state.population
-    ):
-
-        reset_simulation()
-
-
-initialize_simulation()
-
-
-# ============================================================
-# 09. MISSION STATUS HELPERS
+# 08. MISSION HELPERS
 # ============================================================
 
 def get_best_individual():
 
     return max(
-
-        st.session_state.population,
-
+        S.population,
         key=lambda individual: float(
             fitness(individual[0])
         )
@@ -2024,14 +1175,11 @@ def get_best_position():
 def get_display_position():
 
     if (
-        st.session_state.game_finished
-
-        and st.session_state.final_position is not None
+        S.game_finished
+        and S.final_position is not None
     ):
 
-        return int(
-            st.session_state.final_position
-        )
+        return int(S.final_position)
 
     return get_best_position()
 
@@ -2039,28 +1187,57 @@ def get_display_position():
 def get_display_sigma():
 
     if (
-        st.session_state.game_finished
-
-        and st.session_state.final_sigma is not None
+        S.game_finished
+        and S.final_sigma is not None
     ):
 
-        return float(
-            st.session_state.final_sigma
-        )
+        return float(S.final_sigma)
 
-    return float(
-        st.session_state.sigma
-    )
+    if S.game_mode == "Practice":
+
+        return float(S.manual_sigma)
+
+    return float(S.sigma)
 
 
-def get_distance_from_target():
+def get_distance():
 
     return abs(
         TARGET_POSITION - get_display_position()
     )
 
 
-def get_target_status(position):
+def get_phase(position):
+
+    if position < 45:
+
+        return (
+            "EXPLORATION",
+            "#38BDF8",
+            "Try a larger step size to escape "
+            "the local optimum."
+        )
+
+    if position < 68:
+
+        return (
+            "TRANSITION",
+            "#FBBF24",
+            "Balance exploration with smaller "
+            "movements toward the target."
+        )
+
+    return (
+        "PRECISION",
+        "#4ADE80",
+        "Use smaller movements to reach "
+        "position 79 without overshooting."
+    )
+
+
+def get_target_status():
+
+    position = get_display_position()
 
     if position == TARGET_POSITION:
 
@@ -2069,326 +1246,315 @@ def get_target_status(position):
             "#4ADE80"
         )
 
-    if position < TARGET_POSITION:
+    if position > TARGET_POSITION:
 
         return (
-            "BELOW TARGET POSITION",
-            "#FBBF24"
+            "OVERSHOT TARGET POSITION",
+            "#F87171"
         )
 
     return (
-        "OVERSHOT TARGET POSITION",
-        "#F87171"
-    )
-
-
-def get_failure_reason(position):
-
-    if st.session_state.failure_type == "OVERSHOOT":
-
-        parent = (
-            st.session_state.trigger_parent_position
-        )
-
-        individual = (
-            st.session_state.trigger_individual
-        )
-
-        return (
-
-            "OVERSHOOT — TARGET EXCEEDED",
-
-            f"Individual {individual} moved from "
-            f"position {parent} to position {position}. "
-            f"It exceeded the target by "
-            f"{position - TARGET_POSITION} unit(s). "
-            "Try a smaller initial step size or a "
-            "strategy that encourages refinement."
-        )
-
-    if abs(position - LOCAL_OPTIMUM) <= 5:
-
-        return (
-
-            "TRAPPED NEAR THE LOCAL OPTIMUM",
-
-            "The population remained near the smaller "
-            "mountain until the generation limit. "
-            "Try a larger initial step size to "
-            "encourage exploration."
-        )
-
-    return (
-
-        "UNDERSHOOT — TARGET NOT REACHED",
-
-        f"The best individual stopped at position "
-        f"{position}, which is "
-        f"{TARGET_POSITION - position} unit(s) "
-        "before the Global Optimum. "
-        "Try a different parameter combination."
+        "BELOW TARGET POSITION",
+        "#FBBF24"
     )
 
 
 # ============================================================
-# 10. EVOLUTION PROCESS
+# 09. MUTATION PREVIEW
 # ============================================================
 
-def next_generation():
+def generate_mutations():
 
-    # --------------------------------------------------------
-    # STOP IF MISSION HAS ENDED
-    # --------------------------------------------------------
+    if S.game_finished:
 
-    if st.session_state.game_finished:
+        return []
 
-        return
+    if S.generation >= MAX_GENERATIONS:
 
-    if st.session_state.generation >= MAX_GENERATIONS:
+        return []
 
-        return
+    strategy, _ = S.settings
 
-    strategy, initial_sigma = (
-        st.session_state.settings
-    )
+    draws = S.random_draws[S.generation]
 
-    population = list(
-        st.session_state.population
-    )
+    mutations = []
 
-    sigma = float(
-        st.session_state.sigma
-    )
+    for i, (position, individual_sigma) in enumerate(
+        S.population
+    ):
 
-    previous_best_x = get_best_position()
-
-    generation = (
-        st.session_state.generation + 1
-    )
-
-    offspring = []
-
-    mutation_details = []
-
-    exact_hits = []
-
-    overshoot_hits = []
-
-    successes = 0
-
-
-    # ========================================================
-    # A. MUTATION
-    # ========================================================
-
-    for i, (x, individual_sigma) in enumerate(population):
-
-        x = int(x)
-
-        individual_sigma = float(
-            individual_sigma
-        )
+        position = int(position)
 
         # ----------------------------------------------------
-        # SELF-ADAPTIVE MUTATION STEP SIZE
+        # MANUAL CONTROL
         # ----------------------------------------------------
 
-        if strategy == "Self-Adaptive":
+        if strategy == "Manual":
 
             child_sigma = float(
+                S.manual_sigma
+            )
 
+        # ----------------------------------------------------
+        # SELF-ADAPTIVE CONTROL
+        # ----------------------------------------------------
+
+        elif strategy == "Self-Adaptive":
+
+            child_sigma = float(
                 np.clip(
-
                     individual_sigma
-
-                    * np.exp(
-                        0.4 * np.random.normal()
-                    ),
-
+                    * np.exp(0.4 * draws[0, i]),
                     MIN_SIGMA,
-
                     MAX_SIGMA
                 )
             )
 
+        # ----------------------------------------------------
+        # DETERMINISTIC AND ADAPTIVE
+        # ----------------------------------------------------
+
         else:
 
-            child_sigma = sigma
+            child_sigma = float(
+                S.sigma
+            )
 
-
-        # ----------------------------------------------------
-        # RANDOM MUTATION MOVEMENT
-        # ----------------------------------------------------
-
-        mutation = np.random.normal(
-
-            0,
-
-            child_sigma
+        movement = (
+            child_sigma * draws[1, i]
         )
 
-
         # IMPORTANT:
-        # Position is limited to 0–100, NOT 0–79.
-        # This allows genuine overshooting.
+        # Never restrict movement to position 79.
+        # Overshooting must remain possible.
 
-        child_x = int(
-
+        child_position = int(
             np.clip(
-
-                np.rint(x + mutation),
-
+                np.rint(position + movement),
                 MIN_POSITION,
-
                 MAX_POSITION
             )
         )
 
-        offspring.append(
-            (child_x, child_sigma)
-        )
-
         parent_fitness = float(
-            fitness(x)
+            fitness(position)
         )
 
         child_fitness = float(
-            fitness(child_x)
+            fitness(child_position)
         )
 
         improved = (
             child_fitness > parent_fitness
         )
 
-        if improved:
+        if child_position > TARGET_POSITION:
 
-            successes += 1
+            result = "OVERSHOOT"
 
+        elif child_position == TARGET_POSITION:
 
-        # ====================================================
-        # B. CHECK EXACT HIT AND OVERSHOOT
-        # BEFORE SURVIVAL SELECTION
-        # ====================================================
-
-        if child_x == TARGET_POSITION:
-
-            target_result = "EXACT HIT"
-
-            exact_hits.append({
-
-                "individual": i + 1,
-
-                "parent": x,
-
-                "position": child_x,
-
-                "sigma": child_sigma
-            })
-
-        elif child_x > TARGET_POSITION:
-
-            target_result = "OVERSHOOT"
-
-            overshoot_hits.append({
-
-                "individual": i + 1,
-
-                "parent": x,
-
-                "position": child_x,
-
-                "sigma": child_sigma
-            })
+            result = "EXACT HIT"
 
         else:
 
-            target_result = "BELOW TARGET"
+            result = "BELOW TARGET"
 
-
-        mutation_details.append({
-
-            "Individual": i + 1,
-
-            "Parent": x,
-
-            "Offspring": child_x,
-
-            "Movement": child_x - x,
-
-            "Sigma": round(child_sigma, 2),
-
-            "Parent Fitness": round(
-                parent_fitness, 2
-            ),
-
-            "Offspring Fitness": round(
-                child_fitness, 2
-            ),
-
-            "Fitness Result": (
-
-                "Improved"
-
-                if improved
-
-                else "Not Improved"
-            ),
-
-            "Target Result": target_result
+        mutations.append({
+            "individual": i + 1,
+            "parent": position,
+            "position": child_position,
+            "sigma": child_sigma,
+            "movement": child_position - position,
+            "parent_fitness": parent_fitness,
+            "child_fitness": child_fitness,
+            "improved": improved,
+            "result": result
         })
 
+    return mutations
 
-    # ========================================================
-    # C. MUTATION SUCCESS RATE
-    # ========================================================
+
+# ============================================================
+# 10. SAVE HISTORY
+# ============================================================
+
+def save_history(
+    action,
+    success_rate=None
+):
+
+    position = get_display_position()
+
+    S.history.append({
+        "Generation": S.generation,
+        "Position": position,
+        "Fitness": float(fitness(position)),
+        "Sigma": get_display_sigma(),
+        "Distance": abs(
+            TARGET_POSITION - position
+        ),
+        "Success Rate": success_rate,
+        "Action": action
+    })
+
+
+# ============================================================
+# 11. FINISH MISSION
+# ============================================================
+
+def finish_mission(
+    success,
+    failure_type=None,
+    trigger=None
+):
+
+    S.game_finished = True
+
+    S.mission_success = success
+    S.mission_failed = not success
+
+    S.failure_type = failure_type
+
+    if trigger is not None:
+
+        S.final_position = int(
+            trigger["position"]
+        )
+
+        S.final_sigma = float(
+            trigger["sigma"]
+        )
+
+        S.trigger_parent = int(
+            trigger["parent"]
+        )
+
+        S.trigger_individual = int(
+            trigger["individual"]
+        )
+
+    else:
+
+        S.final_position = get_best_position()
+
+        S.final_sigma = (
+            float(S.manual_sigma)
+            if S.game_mode == "Practice"
+            else float(S.sigma)
+        )
+
+    S.active_dialog = "result"
+
+
+# ============================================================
+# 12. EVOLUTION PROCESS
+# ============================================================
+
+def next_generation():
+
+    if S.game_finished:
+
+        return
+
+    if S.generation >= MAX_GENERATIONS:
+
+        return
+
+    strategy, initial_sigma = S.settings
+
+    mutations = generate_mutations()
+
+    if not mutations:
+
+        return
+
+    old_sigma = get_display_sigma()
+
+    previous_position = get_best_position()
+
+    offspring = [
+        (
+            mutation["position"],
+            mutation["sigma"]
+        )
+        for mutation in mutations
+    ]
+
+    successes = sum(
+        mutation["improved"]
+        for mutation in mutations
+    )
 
     success_rate = (
         successes / POPULATION_SIZE
     )
 
+    S.generation += 1
 
-    # ========================================================
-    # D. SURVIVAL SELECTION
-    # ========================================================
+    S.last_mutations = mutations
+    S.last_offspring = offspring
 
-    combined = population + offspring
+    # --------------------------------------------------------
+    # A. CHECK ALL OFFSPRING BEFORE SELECTION
+    # --------------------------------------------------------
+
+    overshoots = [
+        mutation
+        for mutation in mutations
+        if mutation["position"] > TARGET_POSITION
+    ]
+
+    exact_hits = [
+        mutation
+        for mutation in mutations
+        if mutation["position"] == TARGET_POSITION
+    ]
+
+    # --------------------------------------------------------
+    # B. SURVIVAL SELECTION
+    # --------------------------------------------------------
+
+    combined = S.population + offspring
 
     combined.sort(
-
         key=lambda individual: float(
             fitness(individual[0])
         ),
-
         reverse=True
     )
 
     new_population = combined[:POPULATION_SIZE]
 
+    # --------------------------------------------------------
+    # C. PARAMETER CONTROL
+    # --------------------------------------------------------
 
-    # ========================================================
-    # E. PARAMETER CONTROL
-    # ========================================================
+    if strategy == "Manual":
 
-    if strategy == "Deterministic":
+        new_sigma = float(
+            S.manual_sigma
+        )
+
+        explanation = (
+            f"Manual step size: {new_sigma:.2f}. "
+            "The accepted mutations undergo "
+            "fitness-based survival selection."
+        )
+
+    elif strategy == "Deterministic":
 
         new_sigma = max(
-
             MIN_SIGMA,
-
             initial_sigma * (
-                1 - generation / MAX_GENERATIONS
+                1 - S.generation / MAX_GENERATIONS
             )
         )
 
-        feedback = (
-
-            f"Generation {generation}: "
-            f"Deterministic step size "
-            f"{sigma:.2f} → {new_sigma:.2f}. "
-            "Step size decreases according to "
-            "the predefined schedule."
+        explanation = (
+            f"Scheduled step size: "
+            f"{old_sigma:.2f} → {new_sigma:.2f}."
         )
-
 
     elif strategy == "Adaptive":
 
@@ -2396,39 +1562,32 @@ def next_generation():
 
             new_sigma = min(
                 MAX_SIGMA,
-                sigma * 1.25
+                old_sigma * 1.25
             )
 
-            action = "increased"
+            action = "Increase"
 
         elif success_rate < 0.2:
 
             new_sigma = max(
                 MIN_SIGMA,
-                sigma * 0.8
+                old_sigma * 0.8
             )
 
-            action = "decreased"
+            action = "Decrease"
 
         else:
 
-            new_sigma = sigma
+            new_sigma = old_sigma
+            action = "Maintain"
 
-            action = "remained unchanged"
-
-        if new_sigma == sigma:
-
-            action = "remained unchanged"
-
-        feedback = (
-
-            f"Generation {generation}: "
-            f"{successes}/{POPULATION_SIZE} successful "
-            f"mutations ({success_rate:.0%}). "
-            f"Step size {action}: "
-            f"{sigma:.2f} → {new_sigma:.2f}."
+        explanation = (
+            f"{successes}/{POPULATION_SIZE} "
+            f"successful mutations "
+            f"({success_rate:.0%}). "
+            f"{action} sigma: "
+            f"{old_sigma:.2f} → {new_sigma:.2f}."
         )
-
 
     else:
 
@@ -2436,311 +1595,164 @@ def next_generation():
             new_population[0][1]
         )
 
-        feedback = (
-
-            f"Generation {generation}: "
-            "Each individual evolved its own "
-            "mutation step size. "
+        explanation = (
+            "Each individual evolved its own sigma. "
             f"Best surviving sigma: {new_sigma:.2f}."
         )
-
-
-    # --------------------------------------------------------
-    # SYNCHRONIZE SHARED SIGMA
-    # --------------------------------------------------------
 
     if strategy != "Self-Adaptive":
 
         new_population = [
-
-            (int(x), float(new_sigma))
-
-            for x, _ in new_population
+            (int(position), float(new_sigma))
+            for position, _ in new_population
         ]
 
+    S.population = new_population
+    S.sigma = new_sigma
 
-    # ========================================================
-    # F. CALCULATE BEST SURVIVING INDIVIDUAL
-    # ========================================================
+    current_position = get_best_position()
 
-    best_x = int(
-        new_population[0][0]
+    S.feedback = (
+        f"Generation {S.generation}: "
+        f"{explanation} "
+        f"Best position: "
+        f"{previous_position} → {current_position}."
     )
 
-    best_fitness = float(
-        fitness(best_x)
-    )
-
-    distance = abs(
-        TARGET_POSITION - best_x
-    )
-
-
-    # ========================================================
-    # G. EXACT PEAK MISSION RULES
-    # ========================================================
-
-    mission_success = False
-
-    mission_failed = False
-
-    failure_type = None
-
-    final_position = None
-
-    final_sigma = None
-
-    trigger_individual = None
-
-    trigger_parent_position = None
-
-
     # --------------------------------------------------------
-    # RULE 1:
-    # EXACT POSITION 79 = MISSION COMPLETE
+    # D. OVERSHOOT = IMMEDIATE FAILURE
     # --------------------------------------------------------
 
-    if exact_hits:
+    if overshoots:
 
-        winning_individual = exact_hits[0]
+        trigger = overshoots[0]
 
-        mission_success = True
-
-        final_position = TARGET_POSITION
-
-        final_sigma = float(
-            winning_individual["sigma"]
+        finish_mission(
+            success=False,
+            failure_type="OVERSHOOT",
+            trigger=trigger
         )
 
-        trigger_individual = (
-            winning_individual["individual"]
+        S.feedback = (
+            f"Individual {trigger['individual']} "
+            f"moved from {trigger['parent']} "
+            f"to {trigger['position']}. "
+            f"Overshoot: "
+            f"{trigger['position'] - TARGET_POSITION} "
+            "unit(s). MISSION FAILED!"
         )
-
-        trigger_parent_position = (
-            winning_individual["parent"]
-        )
-
-        feedback += (
-
-            f" Individual {trigger_individual} "
-            f"landed exactly at position "
-            f"{TARGET_POSITION}. "
-            "MISSION COMPLETE!"
-        )
-
 
     # --------------------------------------------------------
-    # RULE 2:
-    # ANY OFFSPRING ABOVE 79 = IMMEDIATE FAILURE
-    # IF NO OFFSPRING HIT 79
+    # E. EXACT POSITION 79 = SUCCESS
     # --------------------------------------------------------
 
-    elif overshoot_hits:
+    elif exact_hits:
 
-        # Use the first overshooting offspring
-        # as the individual responsible for failure.
+        trigger = exact_hits[0]
 
-        failed_individual = overshoot_hits[0]
-
-        mission_failed = True
-
-        failure_type = "OVERSHOOT"
-
-        final_position = int(
-            failed_individual["position"]
+        finish_mission(
+            success=True,
+            trigger=trigger
         )
 
-        final_sigma = float(
-            failed_individual["sigma"]
+        S.feedback = (
+            f"Individual {trigger['individual']} "
+            "reached exactly position 79. "
+            "GLOBAL OPTIMUM REACHED!"
         )
 
-        trigger_individual = (
-            failed_individual["individual"]
+    # --------------------------------------------------------
+    # F. GENERATION LIMIT
+    # --------------------------------------------------------
+
+    elif S.generation >= MAX_GENERATIONS:
+
+        finish_mission(
+            success=False,
+            failure_type="UNDERSHOOT"
         )
 
-        trigger_parent_position = (
-            failed_individual["parent"]
-        )
-
-        overshoot_distance = (
-            final_position - TARGET_POSITION
-        )
-
-        feedback += (
-
-            f" Individual {trigger_individual} "
-            f"jumped from position "
-            f"{trigger_parent_position} "
-            f"to {final_position}. "
-
-            f"Overshoot: {overshoot_distance} unit(s). "
-
+        S.feedback += (
+            f" Maximum turns reached. "
+            f"Remaining distance: {get_distance()}. "
             "MISSION FAILED!"
         )
 
+    save_history(
+        action="Mutation accepted",
+        success_rate=success_rate
+    )
 
-    # --------------------------------------------------------
-    # RULE 3:
-    # GENERATION 30 WITHOUT EXACT HIT = UNDERSHOOT
-    # --------------------------------------------------------
 
-    elif generation >= MAX_GENERATIONS:
+# ============================================================
+# 13. RETRY MUTATION — PRACTICE MODE
+# ============================================================
 
-        mission_failed = True
+def retry_mutation():
 
-        failure_type = "UNDERSHOOT"
+    if S.game_finished:
 
-        final_position = best_x
+        return
 
-        final_sigma = float(
-            new_population[0][1]
+    if S.game_mode != "Practice":
+
+        return
+
+    if S.generation >= MAX_GENERATIONS:
+
+        return
+
+    # Reject the current mutation preview.
+    # The population remains unchanged.
+    # One turn is consumed.
+
+    S.generation += 1
+
+    S.last_mutations = []
+    S.last_offspring = []
+
+    S.feedback = (
+        "Mutation rejected. "
+        "Your population remains unchanged. "
+        "One turn has been consumed."
+    )
+
+    if S.generation >= MAX_GENERATIONS:
+
+        finish_mission(
+            success=False,
+            failure_type="UNDERSHOOT"
         )
 
-        feedback += (
-
-            f" Maximum generations reached. "
-            f"Final position: {best_x}. "
-            f"Remaining distance: {distance}. "
-            "MISSION FAILED!"
+        S.feedback += (
+            " No turns remaining. MISSION FAILED!"
         )
 
+    save_history(
+        action="Mutation rejected",
+        success_rate=None
+    )
 
-    # --------------------------------------------------------
-    # RULE 4:
-    # BELOW 79 AND GENERATIONS REMAIN = CONTINUE
-    # --------------------------------------------------------
+
+# ============================================================
+# 14. GAME CALLBACKS
+# ============================================================
+
+def start_game(mode):
+
+    S.game_mode = mode
+    S.game_started = True
+
+    if mode == "Practice":
+
+        S.manual_sigma = 20.0
 
     else:
 
-        feedback += (
-
-            f" Best position: "
-            f"{previous_best_x} → {best_x}. "
-
-            f"Distance to target: "
-            f"{distance} unit(s)."
-        )
-
-
-    game_finished = (
-        mission_success or mission_failed
-    )
-
-
-    # ========================================================
-    # H. UPDATE SIMULATION STATE
-    # ========================================================
-
-    st.session_state.population = new_population
-
-    st.session_state.generation = generation
-
-    st.session_state.sigma = float(new_sigma)
-
-    st.session_state.feedback = feedback
-
-    st.session_state.last_mutations = (
-        mutation_details
-    )
-
-    st.session_state.last_offspring = offspring
-
-    st.session_state.mission_success = (
-        mission_success
-    )
-
-    st.session_state.mission_failed = (
-        mission_failed
-    )
-
-    st.session_state.game_finished = (
-        game_finished
-    )
-
-    st.session_state.failure_type = failure_type
-
-    st.session_state.final_position = (
-        final_position
-    )
-
-    st.session_state.final_sigma = final_sigma
-
-    st.session_state.trigger_individual = (
-        trigger_individual
-    )
-
-    st.session_state.trigger_parent_position = (
-        trigger_parent_position
-    )
-
-    st.session_state.overshoot_count += len(
-        overshoot_hits
-    )
-
-    st.session_state.success_generation = (
-
-        generation
-
-        if mission_success
-
-        else None
-    )
-
-    st.session_state.failure_generation = (
-
-        generation
-
-        if mission_failed
-
-        else None
-    )
-
-
-    # ========================================================
-    # I. UPDATE HISTORIES
-    # ========================================================
-
-    st.session_state.history.append(
-        best_fitness
-    )
-
-    st.session_state.sigma_history.append(
-        float(new_sigma)
-    )
-
-    st.session_state.position_history.append(
-        best_x
-    )
-
-    st.session_state.distance_history.append(
-        distance
-    )
-
-    st.session_state.success_history.append(
-        float(success_rate)
-    )
-
-
-    # ========================================================
-    # J. OPEN MISSION RESULT POP-UP
-    # ========================================================
-
-    if game_finished:
-
-        st.session_state.result_shown = False
-
-        st.session_state.active_dialog = "result"
-
-
-# ============================================================
-# 11. GAME CONTROL CALLBACKS
-# ============================================================
-
-def handle_start_game():
+        S.selected_strategy = "Deterministic"
+        S.initial_sigma = 15
 
     reset_simulation()
-
-    st.session_state.game_started = True
 
 
 def handle_settings_change():
@@ -2748,144 +1760,107 @@ def handle_settings_change():
     reset_simulation()
 
 
-def handle_next_generation():
-
-    if not st.session_state.game_finished:
-
-        next_generation()
-
-
-def handle_run_all():
-
-    remaining_generations = (
-
-        MAX_GENERATIONS
-
-        - st.session_state.generation
-    )
-
-    for _ in range(remaining_generations):
-
-        if st.session_state.game_finished:
-
-            break
-
-        next_generation()
-
-
 def handle_reset():
 
     reset_simulation()
 
 
-def handle_play_again():
+def handle_run_all():
 
-    reset_simulation()
+    if S.game_mode != "Challenge":
 
-    st.session_state.game_started = True
+        return
+
+    while (
+        not S.game_finished
+        and S.generation < MAX_GENERATIONS
+    ):
+
+        next_generation()
 
 
 def handle_home():
 
-    reset_simulation()
+    S.game_started = False
+    S.active_dialog = None
 
-    st.session_state.game_started = False
 
+def open_dialog(name):
 
-def open_dialog(dialog_name):
-
-    st.session_state.active_dialog = dialog_name
-
-    if dialog_name == "performance":
-
-        st.session_state.history_page = 0
+    S.active_dialog = name
+    S.history_page = 0
 
 
 def close_dialog():
 
-    st.session_state.active_dialog = None
+    S.active_dialog = None
+
+
+def change_history_page(direction):
+
+    S.history_page += direction
 
 
 # ============================================================
-# 12. REUSABLE UI COMPONENTS
+# 15. REUSABLE UI COMPONENTS
 # ============================================================
 
 def section_heading(text):
 
     st.html(
-
         f'<div class="section-heading">'
-
-        f'{escape(text)}'
-
-        f'</div>'
+        f'{escape(text)}</div>'
     )
+
+
+def panel_card(
+    title,
+    text,
+    color="#67E8F9"
+):
+
+    st.html(f"""
+    <div class="panel-card">
+        <div class="panel-title"
+             style="color:{color}">
+            {escape(title)}
+        </div>
+        <div class="panel-text">
+            {escape(text)}
+        </div>
+    </div>
+    """)
 
 
 def metric_html(label, value, color):
 
     return f"""
-
     <div class="metric-card">
-
         <div class="metric-label">
             {escape(str(label))}
         </div>
-
         <div class="metric-value"
-             style="color:{color};">
-
+             style="color:{color}">
             {escape(str(value))}
-
         </div>
-
     </div>
     """
 
 
-def result_metric_html(
-    label,
-    value,
-    color="#E2E8F0"
-):
+def static_table(dataframe):
 
-    return f"""
-
-    <div class="result-stat">
-
-        <div class="result-stat-label">
-            {escape(str(label))}
-        </div>
-
-        <div class="result-stat-value"
-             style="color:{color};">
-
-            {escape(str(value))}
-
-        </div>
-
-    </div>
-    """
-
-
-def display_static_table(dataframe):
-
-    table_html = dataframe.to_html(
-
+    table = dataframe.to_html(
         index=False,
-
+        escape=True,
         border=0,
-
-        classes="static-table",
-
-        escape=True
+        classes="static-table"
     )
 
-    st.html(table_html)
+    st.html(table)
 
 
 # ============================================================
-# 13. MATPLOTLIB THREAD LOCK
+# 16. MATPLOTLIB HELPERS
 # ============================================================
 
 @st.cache_resource
@@ -2896,28 +1871,52 @@ def get_plot_lock():
 
 def figure_to_base64(fig):
 
-    with BytesIO() as buffer:
+    buffer = BytesIO()
+
+    try:
 
         fig.savefig(
-
             buffer,
-
             format="png",
-
-            facecolor=fig.get_facecolor(),
-
-            dpi=130
+            dpi=140,
+            facecolor=fig.get_facecolor()
         )
 
+        buffer.seek(0)
+
         return base64.b64encode(
-
-            buffer.getvalue()
-
+            buffer.read()
         ).decode("utf-8")
+
+    finally:
+
+        buffer.close()
+        plt.close(fig)
+
+
+def style_axis(ax):
+
+    ax.set_facecolor("#0B1120")
+
+    ax.tick_params(
+        colors="#94A3B8",
+        labelsize=9
+    )
+
+    for spine in ax.spines.values():
+
+        spine.set_color("#29384C")
+
+    ax.grid(
+        True,
+        color="#334155",
+        alpha=0.25,
+        linestyle="--"
+    )
 
 
 # ============================================================
-# 14. WELCOME MOUNTAIN IMAGE
+# 17. WELCOME MOUNTAIN
 # ============================================================
 
 @st.cache_data
@@ -2926,330 +1925,98 @@ def create_welcome_mountain():
     with get_plot_lock():
 
         fig, ax = plt.subplots(
-
-            figsize=(6.5, 1.8),
-
-            dpi=150
+            figsize=(8, 2.2),
+            facecolor="#080D1C"
         )
 
-        try:
-
-            fig.patch.set_facecolor("#080D1C")
-
-            ax.set_facecolor("#080D1C")
-
-            x = np.linspace(0, 100, 1001)
-
-            y = fitness(x)
-
-            ax.fill_between(
-
-                x,
-
-                20,
-
-                y,
-
-                color="#22D3EE",
-
-                alpha=0.10
-            )
-
-            for width, alpha in [
-
-                (9, 0.04),
-
-                (6, 0.07),
-
-                (3, 0.15)
-            ]:
-
-                ax.plot(
-
-                    x,
-
-                    y,
-
-                    color="#22D3EE",
-
-                    linewidth=width,
-
-                    alpha=alpha
-                )
-
-            ax.plot(
-
-                x,
-
-                y,
-
-                color="#22D3EE",
-
-                linewidth=2
-            )
-
-            local_y = float(
-                fitness(LOCAL_OPTIMUM)
-            )
-
-            global_y = float(
-                fitness(GLOBAL_OPTIMUM)
-            )
-
-            ax.scatter(
-
-                LOCAL_OPTIMUM,
-
-                local_y,
-
-                color="#94A3B8",
-
-                s=30,
-
-                zorder=5
-            )
-
-            ax.scatter(
-
-                GLOBAL_OPTIMUM,
-
-                global_y,
-
-                color="#FBBF24",
-
-                marker="*",
-
-                s=160,
-
-                zorder=6
-            )
-
-            ax.text(
-
-                LOCAL_OPTIMUM,
-
-                local_y + 9,
-
-                "LOCAL OPTIMUM",
-
-                color="#94A3B8",
-
-                fontsize=8,
-
-                ha="center",
-
-                fontweight="bold"
-            )
-
-            ax.text(
-
-                GLOBAL_OPTIMUM,
-
-                global_y + 9,
-
-                "GLOBAL OPTIMUM",
-
-                color="#FBBF24",
-
-                fontsize=8,
-
-                ha="center",
-
-                fontweight="bold"
-            )
-
-            ax.text(
-
-                GLOBAL_OPTIMUM,
-
-                global_y - 17,
-
-                "79",
-
-                color="#FBBF24",
-
-                fontsize=10,
-
-                ha="center",
-
-                fontweight="bold"
-            )
-
-            ax.set_xlim(0, 100)
-
-            ax.set_ylim(20, 125)
-
-            ax.axis("off")
-
-            fig.subplots_adjust(
-
-                left=0.02,
-
-                right=0.98,
-
-                top=0.98,
-
-                bottom=0.02
-            )
-
-            return figure_to_base64(fig)
-
-        finally:
-
-            plt.close(fig)
-
-
-# ============================================================
-# 15. WELCOME SCREEN
-# ============================================================
-
-def display_welcome_screen():
-
-    mountain_image = create_welcome_mountain()
-
-    with st.container(key="welcome_screen"):
-
-        st.html(f"""
-
-        <div class="welcome-label">
-            EVOLUTIONARY COMPUTATION
-        </div>
-
-        <div class="welcome-title">
-            FITNESS MOUNTAIN
-        </div>
-
-        <div class="welcome-subtitle">
-            THE PARAMETER CONTROL CHALLENGE
-        </div>
-
-        <img
-            class="welcome-mountain"
-            src="data:image/png;base64,{mountain_image}"
-            alt="Fitness Mountain"
-        />
-
-        <div class="welcome-mission">
-            EXACT PEAK CHALLENGE
-        </div>
-
-        <div class="welcome-mission-text">
-
-            Reach exactly
-            <strong style="color:#FBBF24;">
-                POSITION 79
-            </strong>
-
-            within 30 generations.
-
-            <br>
-
-            Too far or not far enough?
-            Your mission fails.
-
-        </div>
-
-        <div class="instructions-heading">
-            HOW TO PLAY
-        </div>
-
-        <div class="instruction-row">
-
-            <div class="instruction-number">
-                01
-            </div>
-
-            <div class="instruction-content">
-
-                <div class="instruction-title">
-                    Choose Your Strategy
-                </div>
-
-                <div class="instruction-text">
-
-                    Select Deterministic, Adaptive
-                    or Self-Adaptive Control.
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="instruction-row">
-
-            <div class="instruction-number">
-                02
-            </div>
-
-            <div class="instruction-content">
-
-                <div class="instruction-title">
-                    Set Your Initial Step Size
-                </div>
-
-                <div class="instruction-text">
-
-                    Small steps refine your position.
-                    Large steps explore further but
-                    may overshoot.
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="instruction-row">
-
-            <div class="instruction-number">
-                03
-            </div>
-
-            <div class="instruction-content">
-
-                <div class="instruction-title">
-                    Reach the Exact Peak
-                </div>
-
-                <div class="instruction-text">
-
-                    Run generations to land exactly
-                    at 79. Overshooting or running
-                    out of generations causes failure.
-
-                </div>
-
-            </div>
-
-        </div>
-
-        """)
-
-        st.button(
-
-            "▶ START GAME",
-
-            key="start_game_button",
-
-            type="primary",
-
-            use_container_width=True,
-
-            on_click=handle_start_game
+        ax.set_facecolor("#080D1C")
+
+        x = np.linspace(0, 100, 500)
+        y = fitness(x)
+
+        ax.fill_between(
+            x,
+            20,
+            y,
+            color="#22D3EE",
+            alpha=0.10
         )
 
+        ax.plot(
+            x,
+            y,
+            color="#22D3EE",
+            linewidth=2.5
+        )
+
+        ax.scatter(
+            LOCAL_OPTIMUM,
+            fitness(LOCAL_OPTIMUM),
+            color="#94A3B8",
+            s=45
+        )
+
+        ax.scatter(
+            GLOBAL_OPTIMUM,
+            fitness(GLOBAL_OPTIMUM),
+            marker="*",
+            color="#FBBF24",
+            s=220,
+            zorder=5
+        )
+
+        ax.text(
+            LOCAL_OPTIMUM,
+            fitness(LOCAL_OPTIMUM) + 8,
+            "LOCAL OPTIMUM",
+            color="#94A3B8",
+            fontsize=9,
+            ha="center"
+        )
+
+        ax.text(
+            GLOBAL_OPTIMUM,
+            fitness(GLOBAL_OPTIMUM) + 10,
+            "GLOBAL OPTIMUM · 79",
+            color="#FBBF24",
+            fontsize=10,
+            fontweight="bold",
+            ha="center"
+        )
+
+        ax.set_xlim(0, 100)
+        ax.set_ylim(20, 125)
+
+        ax.axis("off")
+
+        fig.subplots_adjust(
+            left=0.02,
+            right=0.98,
+            top=0.98,
+            bottom=0.02
+        )
+
+        return figure_to_base64(fig)
+
 
 # ============================================================
-# 16. APPLICATION HEADER
+# 18. APPLICATION HEADER
 # ============================================================
 
-def display_header():
+def display_header(show_mode=True):
 
-    st.html("""
+    mode_html = ""
 
+    if show_mode:
+
+        mode_html = (
+            f'<div class="mode-label">'
+            f'{S.game_mode.upper()} MODE'
+            f'</div>'
+        )
+
+    st.html(f"""
     <div class="hero">
-
         <div class="hero-label">
             EVOLUTIONARY COMPUTATION
         </div>
@@ -3262,829 +2029,827 @@ def display_header():
             THE PARAMETER CONTROL CHALLENGE
         </div>
 
+        {mode_html}
     </div>
-
     """)
 
 
 # ============================================================
-# 17. METRIC CARDS
+# 19. WELCOME SCREEN
 # ============================================================
 
-def display_metrics(strategy):
+def display_welcome_screen():
 
-    generation = st.session_state.generation
+    with st.container(
+        key="welcome_screen"
+    ):
+
+        display_header(
+            show_mode=False
+        )
+
+        mountain = create_welcome_mountain()
+
+        st.html(f"""
+        <img
+            class="welcome-mountain"
+            src="data:image/png;base64,{mountain}"
+            alt="Fitness Mountain"
+        >
+
+        <div class="welcome-mission">
+            REACH THE GLOBAL OPTIMUM
+        </div>
+
+        <div class="welcome-text">
+            Land exactly on position 79 within
+            30 turns without overshooting.
+        </div>
+        """)
+
+        instructions = [
+
+            (
+                "01",
+                "Choose Your Mode",
+                "Learn with Practice Mode or test your "
+                "strategy in Challenge Mode."
+            ),
+
+            (
+                "02",
+                "Control Your Step Size",
+                "Use manual sigma or choose an automatic "
+                "parameter control strategy."
+            ),
+
+            (
+                "03",
+                "Reach Position 79",
+                "Hit the exact target to win. "
+                "Overshooting or running out of turns fails."
+            )
+        ]
+
+        html = ""
+
+        for number, title, text in instructions:
+
+            html += f"""
+            <div class="instruction-row">
+
+                <div class="instruction-number">
+                    {number}
+                </div>
+
+                <div>
+                    <div class="instruction-title">
+                        {escape(title)}
+                    </div>
+
+                    <div class="instruction-text">
+                        {escape(text)}
+                    </div>
+                </div>
+
+            </div>
+            """
+
+        st.html(html)
+
+        left, right = st.columns(2)
+
+        with left:
+
+            st.html("""
+            <div class="mode-card">
+
+                <div class="mode-card-title"
+                     style="color:#4ADE80">
+                    🎮 PRACTICE MODE
+                </div>
+
+                <div class="mode-card-text">
+                    Adjust sigma, preview mutations,
+                    accept or reject moves and learn
+                    how to reach the target.
+                </div>
+
+            </div>
+            """)
+
+            st.button(
+                "▶ START PRACTICE",
+                key="start_practice",
+                type="primary",
+                use_container_width=True,
+                on_click=start_game,
+                args=("Practice",)
+            )
+
+        with right:
+
+            st.html("""
+            <div class="mode-card">
+
+                <div class="mode-card-title"
+                     style="color:#FBBF24">
+                    🏆 CHALLENGE MODE
+                </div>
+
+                <div class="mode-card-text">
+                    Choose Deterministic, Adaptive
+                    or Self-Adaptive Control and
+                    conquer the mountain.
+                </div>
+
+            </div>
+            """)
+
+            st.button(
+                "▶ START CHALLENGE",
+                key="start_challenge",
+                type="primary",
+                use_container_width=True,
+                on_click=start_game,
+                args=("Challenge",)
+            )
+
+
+# ============================================================
+# 20. METRIC CARDS
+# ============================================================
+
+def display_metrics():
 
     position = get_display_position()
 
-    position_fitness = float(
+    sigma = get_display_sigma()
+
+    fitness_value = float(
         fitness(position)
     )
 
-    distance = get_distance_from_target()
+    if S.mission_success:
 
-    sigma = get_display_sigma()
+        status_color = "#4ADE80"
 
-    if st.session_state.game_finished:
+    elif S.mission_failed:
 
-        position_label = "FINAL POSITION"
-
-        fitness_label = "FINAL FITNESS"
-
-        sigma_label = "FINAL SIGMA"
+        status_color = "#F87171"
 
     else:
 
-        position_label = "BEST POSITION"
+        status_color = "#22D3EE"
 
-        fitness_label = "BEST FITNESS"
-
-        sigma_label = (
-
-            "BEST SIGMA"
-
-            if strategy == "Self-Adaptive"
-
-            else "CURRENT SIGMA"
-        )
-
-    if position == TARGET_POSITION:
-
-        position_color = "#4ADE80"
-
-        distance_color = "#4ADE80"
-
-    elif position > TARGET_POSITION:
-
-        position_color = "#F87171"
-
-        distance_color = "#F87171"
-
-    else:
-
-        position_color = "#67E8F9"
-
-        distance_color = "#E879F9"
+    position_color = (
+        "#F87171"
+        if position > TARGET_POSITION
+        else "#67E8F9"
+    )
 
     cards = [
 
         metric_html(
-
             "GENERATION",
-
-            f"{generation}/{MAX_GENERATIONS}",
-
+            f"{S.generation}/{MAX_GENERATIONS}",
             "#67E8F9"
         ),
 
         metric_html(
-
-            fitness_label,
-
-            f"{position_fitness:.2f}",
-
+            "FINAL FITNESS"
+            if S.game_finished
+            else "BEST FITNESS",
+            f"{fitness_value:.2f}",
             "#FBBF24"
         ),
 
         metric_html(
-
-            sigma_label,
-
+            "FINAL SIGMA"
+            if S.game_finished
+            else "CURRENT SIGMA",
             f"{sigma:.2f}",
-
             "#E879F9"
         ),
 
         metric_html(
-
-            position_label,
-
+            "FINAL POSITION"
+            if S.game_finished
+            else "BEST POSITION",
             position,
-
             position_color
         ),
 
         metric_html(
-
             "TARGET DISTANCE",
-
-            distance,
-
-            distance_color
+            get_distance(),
+            "#4ADE80"
+            if get_distance() == 0
+            else "#E879F9"
         )
     ]
 
-    progress = min(
-
-        100,
-
-        generation / MAX_GENERATIONS * 100
-    )
-
-    cards_html = "".join(cards)
-
-    progress_color = (
-
-        "#4ADE80"
-
-        if st.session_state.mission_success
-
-        else "#F87171"
-
-        if st.session_state.mission_failed
-
-        else STRATEGIES[strategy]["color"]
+    progress = (
+        S.generation / MAX_GENERATIONS * 100
     )
 
     st.html(f"""
-
     <div class="metric-grid">
-
-        {cards_html}
-
+        {''.join(cards)}
     </div>
 
     <div class="progress-track">
 
-        <div
-            class="progress-fill"
-            style="
-                width:{progress}%;
-                background:{progress_color};
-            "
-        ></div>
+        <div class="progress-fill"
+             style="
+                 width:{progress}%;
+                 background:{status_color};
+             ">
+        </div>
 
     </div>
-
     """)
 
 
 # ============================================================
-# 18. FITNESS LANDSCAPE
+# 21. PHASE INDICATOR
 # ============================================================
 
-def display_fitness_landscape(accent):
+def display_phase_indicator():
 
-    display_x = get_display_position()
+    position = get_display_position()
 
-    display_fitness = float(
-        fitness(display_x)
+    current_phase, _, _ = get_phase(
+        position
     )
 
-    population = st.session_state.population
+    phases = [
 
-    offspring = st.session_state.last_offspring
+        (
+            "EXPLORATION",
+            "0–44",
+            "#38BDF8"
+        ),
 
-    x_values = np.linspace(
-        MIN_POSITION,
-        MAX_POSITION,
-        1001
-    )
+        (
+            "TRANSITION",
+            "45–67",
+            "#FBBF24"
+        ),
 
-    y_values = fitness(x_values)
+        (
+            "PRECISION",
+            "68–79",
+            "#4ADE80"
+        )
+    ]
+
+    html = ""
+
+    for phase, positions, color in phases:
+
+        active = (
+            "phase-active"
+            if phase == current_phase
+            and not S.game_finished
+            else ""
+        )
+
+        html += f"""
+        <div class="phase-card {active}"
+             style="--phase-color:{color}">
+
+            {phase} · {positions}
+
+        </div>
+        """
+
+    st.html(f"""
+    <div class="phase-grid">
+        {html}
+    </div>
+    """)
+
+
+# ============================================================
+# 22. FITNESS LANDSCAPE
+# ============================================================
+
+def display_fitness_landscape():
 
     with get_plot_lock():
 
         fig, ax = plt.subplots(
-
-            figsize=(13.5, 4.2),
-
-            dpi=150
+            figsize=(13, 3.6),
+            facecolor="#0B1120"
         )
 
-        try:
+        style_axis(ax)
 
-            fig.patch.set_facecolor("#0B1120")
+        x = np.linspace(
+            MIN_POSITION,
+            MAX_POSITION,
+            800
+        )
 
-            ax.set_facecolor("#0B1120")
+        y = fitness(x)
 
+        # ----------------------------------------------------
+        # OVERSHOOT ZONE
+        # ----------------------------------------------------
 
-            # ------------------------------------------------
-            # OVERSHOOT DANGER ZONE
-            # ------------------------------------------------
+        ax.axvspan(
+            TARGET_POSITION,
+            MAX_POSITION,
+            color="#EF4444",
+            alpha=0.08
+        )
 
-            ax.axvspan(
+        ax.text(
+            90,
+            117,
+            "OVERSHOOT ZONE",
+            color="#F87171",
+            fontsize=9,
+            fontweight="bold",
+            ha="center"
+        )
 
-                TARGET_POSITION,
+        # ----------------------------------------------------
+        # MOUNTAIN GLOW
+        # ----------------------------------------------------
 
-                MAX_POSITION,
-
-                color="#EF4444",
-
-                alpha=0.07,
-
-                zorder=0
-            )
-
-
-            # ------------------------------------------------
-            # FITNESS CURVE
-            # ------------------------------------------------
-
-            ax.fill_between(
-
-                x_values,
-
-                20,
-
-                y_values,
-
-                color="#22D3EE",
-
-                alpha=0.10
-            )
-
-            for width, alpha in [
-
-                (10, 0.025),
-
-                (6, 0.05),
-
-                (3, 0.15)
-            ]:
-
-                ax.plot(
-
-                    x_values,
-
-                    y_values,
-
-                    color="#22D3EE",
-
-                    linewidth=width,
-
-                    alpha=alpha
-                )
+        for width, alpha in [
+            (9, 0.025),
+            (6, 0.045),
+            (4, 0.09)
+        ]:
 
             ax.plot(
-
-                x_values,
-
-                y_values,
-
+                x,
+                y,
                 color="#22D3EE",
-
-                linewidth=2
+                linewidth=width,
+                alpha=alpha
             )
 
+        ax.fill_between(
+            x,
+            20,
+            y,
+            color="#22D3EE",
+            alpha=0.10
+        )
+
+        ax.plot(
+            x,
+            y,
+            color="#22D3EE",
+            linewidth=2.2,
+            zorder=3
+        )
+
+        # ----------------------------------------------------
+        # LOCAL OPTIMUM
+        # ----------------------------------------------------
+
+        ax.scatter(
+            LOCAL_OPTIMUM,
+            fitness(LOCAL_OPTIMUM),
+            color="#94A3B8",
+            s=55,
+            zorder=5
+        )
+
+        ax.text(
+            LOCAL_OPTIMUM,
+            fitness(LOCAL_OPTIMUM) + 13,
+            "LOCAL OPTIMUM\nPosition 27",
+            color="#94A3B8",
+            fontsize=9,
+            fontweight="bold",
+            ha="center"
+        )
+
+        # ----------------------------------------------------
+        # GLOBAL OPTIMUM
+        # ----------------------------------------------------
+
+        ax.axvline(
+            TARGET_POSITION,
+            color="#FBBF24",
+            linestyle="--",
+            linewidth=1.2,
+            alpha=0.8
+        )
+
+        ax.scatter(
+            TARGET_POSITION,
+            fitness(TARGET_POSITION),
+            color="#FBBF24",
+            marker="*",
+            s=230,
+            zorder=7
+        )
+
+        ax.text(
+            TARGET_POSITION,
+            113,
+            "GLOBAL OPTIMUM\nPosition 79",
+            color="#FBBF24",
+            fontsize=10,
+            fontweight="bold",
+            ha="center"
+        )
+
+        # ----------------------------------------------------
+        # CURRENT POPULATION
+        # ----------------------------------------------------
+
+        population_x = [
+            position
+            for position, _ in S.population
+        ]
+
+        ax.scatter(
+            population_x,
+            fitness(np.array(population_x)),
+            s=50,
+            color="#0891B2",
+            edgecolors="#67E8F9",
+            alpha=0.8,
+            label="Population",
+            zorder=6
+        )
+
+        # ----------------------------------------------------
+        # PRACTICE MUTATION PREVIEW
+        # ----------------------------------------------------
+
+        if (
+            S.game_mode == "Practice"
+            and not S.game_finished
+        ):
+
+            mutations = generate_mutations()
+
+            for i, mutation in enumerate(mutations):
 
-            # ------------------------------------------------
-            # LOCAL OPTIMUM
-            # ------------------------------------------------
+                parent = mutation["parent"]
+                child = mutation["position"]
 
-            local_y = float(
-                fitness(LOCAL_OPTIMUM)
-            )
+                if child > TARGET_POSITION:
 
-            ax.scatter(
+                    color = "#F87171"
 
-                LOCAL_OPTIMUM,
+                elif child == TARGET_POSITION:
 
-                local_y,
-
-                color="#94A3B8",
-
-                s=45,
-
-                zorder=6
-            )
-
-            ax.annotate(
-
-                "LOCAL OPTIMUM\nPosition 27",
-
-                xy=(
-                    LOCAL_OPTIMUM,
-                    local_y
-                ),
-
-                xytext=(
-                    LOCAL_OPTIMUM,
-                    local_y + 12
-                ),
-
-                ha="center",
-
-                color="#94A3B8",
-
-                fontsize=8,
-
-                fontweight="bold"
-            )
-
-
-            # ------------------------------------------------
-            # GLOBAL OPTIMUM
-            # ------------------------------------------------
-
-            global_y = float(
-                fitness(GLOBAL_OPTIMUM)
-            )
-
-            ax.axvline(
-
-                TARGET_POSITION,
-
-                color="#FBBF24",
-
-                linestyle="--",
-
-                linewidth=1.1,
-
-                alpha=0.75
-            )
-
-            ax.scatter(
-
-                GLOBAL_OPTIMUM,
-
-                global_y,
-
-                color="#FBBF24",
-
-                marker="*",
-
-                s=170,
-
-                zorder=7
-            )
-
-            ax.annotate(
-
-                "GLOBAL OPTIMUM\nPosition 79",
-
-                xy=(
-                    GLOBAL_OPTIMUM,
-                    global_y
-                ),
-
-                xytext=(
-                    GLOBAL_OPTIMUM,
-                    global_y + 11
-                ),
-
-                ha="center",
-
-                color="#FBBF24",
-
-                fontsize=8,
-
-                fontweight="bold"
-            )
-
-            ax.text(
-
-                90,
-
-                116,
-
-                "OVERSHOOT ZONE",
-
-                color="#F87171",
-
-                fontsize=7,
-
-                ha="center",
-
-                fontweight="bold"
-            )
-
-
-            # ------------------------------------------------
-            # SURVIVING POPULATION
-            # ------------------------------------------------
-
-            population_x = [
-
-                individual[0]
-
-                for individual in population
-            ]
-
-            population_y = [
-
-                float(fitness(x))
-
-                for x in population_x
-            ]
-
-            ax.scatter(
-
-                population_x,
-
-                population_y,
-
-                color=accent,
-
-                s=45,
-
-                alpha=0.65,
-
-                edgecolors="#E2E8F0",
-
-                linewidths=0.5,
-
-                label="Population",
-
-                zorder=8
-            )
-
-
-            # ------------------------------------------------
-            # SHOW ALL OVERSHOOTING OFFSPRING
-            # EVEN IF REJECTED BY SURVIVAL SELECTION
-            # --------------------------------------------------------
-
-            overshoot_positions = [
-
-                x
-
-                for x, _ in offspring
-
-                if x > TARGET_POSITION
-            ]
-
-            if overshoot_positions:
-
-                ax.scatter(
-
-                    overshoot_positions,
-
-                    [
-                        float(fitness(x))
-                        for x in overshoot_positions
-                    ],
-
-                    color="#F87171",
-
-                    marker="X",
-
-                    s=70,
-
-                    edgecolors="#FFFFFF",
-
-                    linewidths=0.6,
-
-                    label="Overshoot",
-
-                    zorder=9
-                )
-
-
-            # ------------------------------------------------
-            # CURRENT OR FINAL POSITION
-            # ------------------------------------------------
-
-            if st.session_state.mission_success:
-
-                marker_color = "#4ADE80"
-
-                marker_label = "Exact Hit"
-
-                position_text = "EXACT HIT: 79"
-
-            elif st.session_state.mission_failed:
-
-                marker_color = "#F87171"
-
-                marker_label = "Final Position"
-
-                if (
-                    st.session_state.failure_type
-                    == "OVERSHOOT"
-                ):
-
-                    position_text = (
-                        f"OVERSHOOT: {display_x}"
-                    )
+                    color = "#4ADE80"
 
                 else:
 
-                    position_text = (
-                        f"UNDERSHOOT: {display_x}"
-                    )
-
-            else:
-
-                marker_color = accent
-
-                marker_label = "Best Individual"
-
-                position_text = (
-                    f"BEST: {display_x}"
-                )
-
-
-            ax.scatter(
-
-                display_x,
-
-                display_fitness,
-
-                color=marker_color,
-
-                s=250,
-
-                alpha=0.12,
-
-                zorder=10
-            )
-
-            ax.scatter(
-
-                display_x,
-
-                display_fitness,
-
-                color=marker_color,
-
-                s=85,
-
-                edgecolors="#FFFFFF",
-
-                linewidths=1.2,
-
-                label=marker_label,
-
-                zorder=11
-            )
-
-            ax.vlines(
-
-                display_x,
-
-                20,
-
-                display_fitness,
-
-                color=marker_color,
-
-                linestyle=":",
-
-                linewidth=1,
-
-                alpha=0.7
-            )
-
-            ax.annotate(
-
-                position_text,
-
-                xy=(
-                    display_x,
-                    display_fitness
-                ),
-
-                xytext=(
-
-                    display_x,
-
-                    max(
-                        24,
-                        display_fitness - 12
-                    )
-                ),
-
-                color=marker_color,
-
-                fontsize=8,
-
-                fontweight="bold",
-
-                ha="center"
-            )
-
-
-            # ------------------------------------------------
-            # SHOW FAILED MUTATION MOVEMENT
-            # ------------------------------------------------
-
-            if (
-
-                st.session_state.failure_type
-                == "OVERSHOOT"
-
-                and st.session_state.trigger_parent_position
-                is not None
-            ):
-
-                parent_x = (
-                    st.session_state.trigger_parent_position
-                )
-
-                parent_y = float(
-                    fitness(parent_x)
-                )
+                    color = "#FBBF24"
 
                 ax.annotate(
-
                     "",
-
                     xy=(
-                        display_x,
-                        display_fitness
+                        child,
+                        fitness(child)
                     ),
-
                     xytext=(
-                        parent_x,
-                        parent_y
+                        parent,
+                        fitness(parent)
                     ),
-
                     arrowprops={
-
                         "arrowstyle": "->",
-
-                        "color": "#F87171",
-
-                        "linewidth": 1.5,
-
-                        "connectionstyle": "arc3,rad=-0.25"
+                        "color": color,
+                        "linestyle": "--",
+                        "alpha": 0.65,
+                        "connectionstyle": "arc3,rad=-0.12"
                     },
-
-                    zorder=9
+                    zorder=4
                 )
 
+                ax.scatter(
+                    child,
+                    fitness(child),
+                    s=75,
+                    facecolors="none",
+                    edgecolors=color,
+                    linewidths=1.6,
+                    label=(
+                        "Mutation Preview"
+                        if i == 0
+                        else None
+                    ),
+                    zorder=8
+                )
 
-            # ------------------------------------------------
-            # GRAPH STYLING
-            # ------------------------------------------------
+        # ----------------------------------------------------
+        # BEST / FINAL INDIVIDUAL
+        # ----------------------------------------------------
 
-            ax.set_xlim(0, 100)
+        position = get_display_position()
 
-            ax.set_ylim(15, 125)
+        if S.mission_success:
 
-            ax.set_xticks(
-                np.arange(0, 101, 10)
+            point_color = "#4ADE80"
+            point_label = "EXACT HIT"
+
+        elif S.mission_failed:
+
+            point_color = "#F87171"
+
+            point_label = (
+                "OVERSHOOT"
+                if position > TARGET_POSITION
+                else "UNDERSHOOT"
             )
 
-            ax.set_yticks(
-                np.arange(20, 121, 20)
+        else:
+
+            point_color = "#22D3EE"
+            point_label = "BEST"
+
+        ax.scatter(
+            position,
+            fitness(position),
+            s=110,
+            color=point_color,
+            edgecolors="#FFFFFF",
+            linewidths=1.3,
+            label=(
+                "Final Position"
+                if S.game_finished
+                else "Best Individual"
+            ),
+            zorder=10
+        )
+
+        ax.vlines(
+            position,
+            20,
+            fitness(position),
+            colors=point_color,
+            linestyles=":",
+            alpha=0.6
+        )
+
+        ax.text(
+            position,
+            max(23, fitness(position) - 10),
+            f"{point_label}: {position}",
+            color=point_color,
+            fontsize=9,
+            fontweight="bold",
+            ha="center"
+        )
+
+        # ----------------------------------------------------
+        # FINAL OVERSHOOT MOVEMENT
+        # ----------------------------------------------------
+
+        if (
+            S.failure_type == "OVERSHOOT"
+            and S.trigger_parent is not None
+        ):
+
+            ax.annotate(
+                "",
+                xy=(
+                    position,
+                    fitness(position)
+                ),
+                xytext=(
+                    S.trigger_parent,
+                    fitness(S.trigger_parent)
+                ),
+                arrowprops={
+                    "arrowstyle": "->",
+                    "color": "#F87171",
+                    "linewidth": 2,
+                    "connectionstyle": "arc3,rad=-0.3"
+                },
+                zorder=9
             )
 
-            ax.set_xlabel(
+        ax.set_xlim(0, 100)
+        ax.set_ylim(15, 125)
 
-                "POSITION (x)",
+        ax.set_xticks(
+            np.arange(0, 101, 10)
+        )
 
-                color="#94A3B8",
+        ax.set_xlabel(
+            "POSITION (x)",
+            color="#94A3B8",
+            fontsize=10
+        )
 
-                fontsize=8
-            )
+        ax.set_ylabel(
+            "FITNESS",
+            color="#94A3B8",
+            fontsize=10
+        )
 
-            ax.set_ylabel(
+        legend = ax.legend(
+            loc="upper left",
+            facecolor="#111827",
+            edgecolor="#29384C",
+            fontsize=8
+        )
 
-                "FITNESS",
+        for text in legend.get_texts():
 
-                color="#94A3B8",
+            text.set_color("#CBD5E1")
 
-                fontsize=8
-            )
+        fig.subplots_adjust(
+            left=0.055,
+            right=0.98,
+            top=0.94,
+            bottom=0.16
+        )
 
-            ax.tick_params(
+        image = figure_to_base64(fig)
 
-                colors="#94A3B8",
+    image_class = "fitness-image"
 
-                labelsize=7
-            )
+    if S.game_mode == "Practice":
 
-            ax.grid(
-
-                True,
-
-                color="#334155",
-
-                linestyle="--",
-
-                linewidth=0.5,
-
-                alpha=0.35
-            )
-
-            for spine in ax.spines.values():
-
-                spine.set_color("#29384C")
-
-            legend = ax.legend(
-
-                loc="upper left",
-
-                fontsize=7,
-
-                facecolor="#111827",
-
-                edgecolor="#29384C"
-            )
-
-            for text in legend.get_texts():
-
-                text.set_color("#CBD5E1")
-
-            fig.subplots_adjust(
-
-                left=0.07,
-
-                right=0.98,
-
-                top=0.94,
-
-                bottom=0.17
-            )
-
-            encoded_image = figure_to_base64(fig)
-
-        finally:
-
-            plt.close(fig)
+        image_class += " practice-image"
 
     st.html(f"""
-
     <img
-        class="fitness-image"
-        src="data:image/png;base64,{encoded_image}"
-        alt="Current fitness landscape"
-    />
-
+        class="{image_class}"
+        src="data:image/png;base64,{image}"
+        alt="Fitness landscape"
+    >
     """)
 
 
 # ============================================================
-# 19. TARGET STATUS
+# 23. MUTATION PREVIEW PANEL
 # ============================================================
 
-def display_target_status():
+def display_mutation_preview():
 
-    position = get_display_position()
+    if S.game_finished:
 
-    distance = get_distance_from_target()
+        return
 
-    status, color = get_target_status(
-        position
+    mutations = generate_mutations()
+
+    if not mutations:
+
+        return
+
+    overshoots = [
+        mutation
+        for mutation in mutations
+        if mutation["position"] > TARGET_POSITION
+    ]
+
+    exact_hits = [
+        mutation
+        for mutation in mutations
+        if mutation["position"] == TARGET_POSITION
+    ]
+
+    candidates = ", ".join(
+        str(mutation["position"])
+        for mutation in mutations
     )
 
-    if position > TARGET_POSITION:
+    if overshoots:
 
-        distance_label = (
-            f"OVERSHOOT: {distance} UNIT(S)"
+        color = "#F87171"
+
+        title = "⚠ OVERSHOOT DETECTED"
+
+        message = (
+            "Reduce sigma or retry the mutation. "
+            "Accepting this generation will fail the mission."
         )
 
-    elif position == TARGET_POSITION:
+    elif exact_hits:
 
-        distance_label = "DISTANCE: 0"
+        color = "#4ADE80"
+
+        title = "✓ EXACT TARGET DETECTED"
+
+        message = (
+            "No offspring overshoots. "
+            "Accept this generation to complete the mission."
+        )
 
     else:
 
-        distance_label = (
-            f"DISTANCE: {distance} UNIT(S)"
+        color = "#FBBF24"
+
+        title = "MUTATION PREVIEW"
+
+        combined = S.population + [
+            (
+                mutation["position"],
+                mutation["sigma"]
+            )
+            for mutation in mutations
+        ]
+
+        predicted_best = max(
+            combined,
+            key=lambda individual: float(
+                fitness(individual[0])
+            )
+        )[0]
+
+        message = (
+            f"Predicted best survivor: {predicted_best}. "
+            f"Target distance: "
+            f"{abs(TARGET_POSITION - predicted_best)}."
         )
 
     st.html(f"""
+    <div class="preview-box"
+         style="border-left-color:{color}">
 
-    <div class="target-status">
+        <div class="preview-title"
+             style="color:{color}">
 
-        <div class="target-status-label">
-
-            TARGET: POSITION {TARGET_POSITION}
-
-        </div>
-
-        <div class="target-status-value"
-             style="color:{color};">
-
-            {escape(status)}
+            {escape(title)}
 
         </div>
 
-        <div class="target-status-label">
+        <div class="preview-value"
+             style="color:{color}">
 
-            {escape(distance_label)}
+            Offspring: {escape(candidates)}
+
+        </div>
+
+        <div class="preview-text">
+
+            {escape(message)}
 
         </div>
 
     </div>
-
     """)
 
 
 # ============================================================
-# 20. LIVE EVOLUTION FEEDBACK
+# 24. TARGET STATUS
+# ============================================================
+
+def display_target_status():
+
+    status, color = get_target_status()
+
+    distance = get_distance()
+
+    st.html(f"""
+    <div class="target-status">
+
+        <span style="color:#94A3B8">
+            TARGET: POSITION 79
+        </span>
+
+        <span style="color:{color}">
+            {status}
+        </span>
+
+        <span style="color:#94A3B8">
+            DISTANCE: {distance} UNIT(S)
+        </span>
+
+    </div>
+    """)
+
+
+# ============================================================
+# 25. LIVE EVOLUTION FEEDBACK
 # ============================================================
 
 def display_feedback():
 
-    feedback_class = ""
+    if S.mission_success:
 
-    if st.session_state.mission_success:
+        color = "#4ADE80"
 
-        feedback_class = "feedback-success"
+    elif S.mission_failed:
 
-    elif st.session_state.mission_failed:
+        color = "#F87171"
 
-        feedback_class = "feedback-failed"
+    else:
+
+        color = "#FBBF24"
 
     st.html(f"""
+    <div class="feedback-box"
+         style="border-left-color:{color}">
 
-    <div class="feedback-box {feedback_class}">
-
-        <div class="feedback-title">
+        <div class="feedback-title"
+             style="color:{color}">
 
             LIVE EVOLUTION FEEDBACK
 
@@ -4092,214 +2857,222 @@ def display_feedback():
 
         <div class="feedback-text">
 
-            {escape(st.session_state.feedback)}
+            {escape(S.feedback)}
 
         </div>
 
     </div>
-
     """)
 
 
 # ============================================================
-# 21. MISSION RESULT POP-UP
+# 26. STRATEGIC HINT
 # ============================================================
 
+def display_strategic_hint():
+
+    if S.game_finished:
+
+        return
+
+    position = get_best_position()
+
+    phase, color, hint = get_phase(
+        position
+    )
+
+    if S.game_mode == "Practice":
+
+        if position < 45:
+
+            recommendation = "Suggested σ: 15–30."
+
+        elif position < 68:
+
+            recommendation = "Suggested σ: 5–10."
+
+        else:
+
+            recommendation = "Suggested σ: 0.5–3."
+
+        hint += " " + recommendation
+
+    else:
+
+        hint += (
+            " Your selected strategy controls sigma "
+            "automatically."
+        )
+
+    panel_card(
+        f"STRATEGIC HINT · {phase}",
+        hint,
+        color
+    )
+
+
+# ============================================================
+# 27. MISSION RESULT POP-UP
+# ============================================================
+
+def result_stat(label, value):
+
+    return f"""
+    <div class="result-stat">
+
+        <div class="result-stat-label">
+            {escape(str(label))}
+        </div>
+
+        <div class="result-stat-value">
+            {escape(str(value))}
+        </div>
+
+    </div>
+    """
+
+
 @st.dialog(
-
     "Mission Result",
-
     width="large",
-
     dismissible=False
 )
 def mission_result_dialog():
 
-    success = st.session_state.mission_success
+    position = get_display_position()
 
-    strategy = st.session_state.settings[0]
-
-    generation = st.session_state.generation
-
-    final_x = get_display_position()
-
-    final_fitness = float(
-        fitness(final_x)
-    )
-
-    final_sigma = get_display_sigma()
-
-    distance = get_distance_from_target()
-
-
-    # --------------------------------------------------------
-    # SUCCESS RESULT
-    # --------------------------------------------------------
-
-    if success:
-
-        result_class = "result-success"
-
-        icon = "🏆"
+    if S.mission_success:
 
         title = "MISSION COMPLETE"
 
+        icon = "🏆"
+
         color = "#4ADE80"
 
-        description = (
+        result_class = "result-success"
 
-            "Congratulations! You landed exactly "
-            "at the Global Optimum."
+        description = (
+            "Congratulations! You reached "
+            "the exact Global Optimum."
         )
 
-        reason_title = "EXACT GLOBAL OPTIMUM REACHED"
+        reason_title = "GLOBAL OPTIMUM REACHED"
 
         reason = (
-
-            f"Individual "
-            f"{st.session_state.trigger_individual} "
-            f"moved from position "
-            f"{st.session_state.trigger_parent_position} "
-            f"to exactly position {TARGET_POSITION} "
-            f"in generation {generation}. "
-            "Target distance is zero."
+            f"Individual {S.trigger_individual} "
+            f"landed exactly on position 79 "
+            f"in generation {S.generation}. "
+            "Your parameter control strategy "
+            "successfully balanced exploration "
+            "and precision."
         )
-
-
-    # --------------------------------------------------------
-    # FAILED RESULT
-    # --------------------------------------------------------
 
     else:
 
-        result_class = "result-failed"
-
-        icon = "❌"
-
         title = "MISSION FAILED"
+
+        icon = "✖"
 
         color = "#F87171"
 
-        if (
+        result_class = "result-failed"
 
-            st.session_state.failure_type
-            == "OVERSHOOT"
-        ):
+        description = (
+            "The population did not satisfy "
+            "the mission objective."
+        )
 
-            description = (
+        if S.failure_type == "OVERSHOOT":
 
-                "You overshot the Global Optimum! "
-                "Your mission has ended immediately."
+            reason_title = "OVERSHOOT"
+
+            reason = (
+                f"Individual {S.trigger_individual} "
+                f"moved from {S.trigger_parent} "
+                f"to {position}. "
+                f"It exceeded the target by "
+                f"{position - TARGET_POSITION} unit(s). "
+                "Try a smaller mutation step size."
+            )
+
+        elif abs(position - LOCAL_OPTIMUM) <= 5:
+
+            reason_title = "TRAPPED AT LOCAL OPTIMUM"
+
+            reason = (
+                "The population remained near "
+                "the smaller mountain. "
+                "Try stronger exploration or "
+                "a different parameter control strategy."
             )
 
         else:
 
-            description = (
+            reason_title = "UNDERSHOOT"
 
-                "You reached the generation limit "
-                "without landing exactly at position 79."
+            reason = (
+                f"All 30 turns have been consumed. "
+                f"The final position is {position}, "
+                f"which is {get_distance()} units "
+                "away from the Global Optimum."
             )
 
-        reason_title, reason = get_failure_reason(
-            final_x
-        )
+    stats = "".join([
 
-
-    result_cards = "".join([
-
-        result_metric_html(
-
-            "FINAL POSITION",
-
-            final_x,
-
-            color
-        ),
-
-        result_metric_html(
-
-            "FINAL FITNESS",
-
-            f"{final_fitness:.2f}",
-
-            "#FBBF24"
-        ),
-
-        result_metric_html(
-
+        result_stat(
             "GENERATION",
-
-            f"{generation}/{MAX_GENERATIONS}",
-
-            "#67E8F9"
+            f"{S.generation}/30"
         ),
 
-        result_metric_html(
+        result_stat(
+            "FINAL POSITION",
+            position
+        ),
 
+        result_stat(
+            "FINAL FITNESS",
+            f"{fitness(position):.2f}"
+        ),
+
+        result_stat(
             "TARGET DISTANCE",
-
-            distance,
-
-            color
+            get_distance()
         )
     ])
 
-    st.html(f"""
+    strategy, _ = S.settings
 
+    st.html(f"""
     <div class="result-container {result_class}">
 
-        <div class="result-icon">
-
+        <div class="result-icon"
+             style="color:{color}">
             {icon}
-
         </div>
 
-        <div class="result-title">
-
+        <div class="result-title"
+             style="color:{color}">
             {title}
-
         </div>
 
         <div class="result-description">
-
             {escape(description)}
-
         </div>
 
         <div class="result-grid">
-
-            {result_cards}
-
-        </div>
-
-        <div class="result-strategy"
-             style="color:{STRATEGIES[strategy]['color']};">
-
-            {escape(strategy)} Control
-
-        </div>
-
-        <div class="dialog-description">
-
-            Initial Step Size:
-            {st.session_state.settings[1]:.2f}
-
-            &nbsp; | &nbsp;
-
-            Final Step Size:
-            {final_sigma:.2f}
-
+            {stats}
         </div>
 
         <div class="result-reason">
 
-            <div class="result-reason-title">
+            <div class="panel-title"
+                 style="color:{color}">
 
                 {escape(reason_title)}
 
             </div>
 
-            <div class="result-reason-text">
+            <div class="panel-text">
 
                 {escape(reason)}
 
@@ -4307,1123 +3080,580 @@ def mission_result_dialog():
 
         </div>
 
-    </div>
+        <div class="small-text"
+             style="margin-top:10px">
 
+            {escape(S.game_mode)} Mode
+            · {escape(strategy)} Control
+
+        </div>
+
+    </div>
     """)
 
-    col1, col2, col3 = st.columns(3)
+    a, b, c = st.columns(3)
 
-    with col1:
+    with a:
 
         if st.button(
-
             "↻ PLAY AGAIN",
-
             key="result_play_again",
-
             type="primary",
-
             use_container_width=True
         ):
 
-            handle_play_again()
-
+            reset_simulation()
             st.rerun()
 
-    with col2:
+    with b:
 
         if st.button(
-
-            "📊 PERFORMANCE ANALYSIS",
-
-            key="result_performance",
-
-            use_container_width=True
-        ):
-
-            open_dialog("performance")
-
-            st.rerun()
-
-    with col3:
-
-        if st.button(
-
-            "CLOSE",
-
+            "VIEW DASHBOARD",
             key="result_close",
-
             use_container_width=True
         ):
 
             close_dialog()
+            st.rerun()
 
+    with c:
+
+        if st.button(
+            "🏠 MAIN MENU",
+            key="result_home",
+            use_container_width=True
+        ):
+
+            handle_home()
             st.rerun()
 
 
 # ============================================================
-# 22. PERFORMANCE ANALYSIS CHART
+# 28. PERFORMANCE ANALYSIS CHART
 # ============================================================
 
-def display_analysis_chart(
+def display_analysis_chart():
 
-    values,
-
-    title,
-
-    ylabel,
-
-    color,
-
-    target=None,
-
-    show_final_position=False
-):
-
-    generations = list(
-        range(len(values))
+    dataframe = pd.DataFrame(
+        S.history
     )
 
     with get_plot_lock():
 
-        fig, ax = plt.subplots(
-
-            figsize=(10, 2.6),
-
-            dpi=130
+        fig, axes = plt.subplots(
+            1,
+            3,
+            figsize=(12, 3),
+            facecolor="#080D1C"
         )
 
-        try:
+        charts = [
 
-            fig.patch.set_facecolor("#080D1C")
+            (
+                "Fitness",
+                "#22D3EE",
+                "Fitness Progress"
+            ),
 
-            ax.set_facecolor("#080D1C")
+            (
+                "Sigma",
+                "#E879F9",
+                "Mutation Step Size"
+            ),
+
+            (
+                "Distance",
+                "#FBBF24",
+                "Target Distance"
+            )
+        ]
+
+        for ax, (column, color, title) in zip(
+            axes,
+            charts
+        ):
+
+            style_axis(ax)
 
             ax.plot(
-
-                generations,
-
-                values,
-
+                dataframe["Generation"],
+                dataframe[column],
                 color=color,
-
                 linewidth=2,
-
                 marker="o",
-
-                markersize=3,
-
-                label="Best surviving population"
+                markersize=3
             )
-
-            ax.fill_between(
-
-                generations,
-
-                values,
-
-                color=color,
-
-                alpha=0.08
-            )
-
-            if target is not None:
-
-                ax.axhline(
-
-                    target,
-
-                    color="#FBBF24",
-
-                    linestyle="--",
-
-                    linewidth=1,
-
-                    label=f"Target: {target}"
-                )
-
-            if (
-
-                show_final_position
-
-                and st.session_state.game_finished
-
-                and st.session_state.final_position
-                is not None
-            ):
-
-                final_x = (
-                    st.session_state.final_position
-                )
-
-                final_color = (
-
-                    "#4ADE80"
-
-                    if st.session_state.mission_success
-
-                    else "#F87171"
-                )
-
-                ax.scatter(
-
-                    st.session_state.generation,
-
-                    final_x,
-
-                    color=final_color,
-
-                    marker="X",
-
-                    s=100,
-
-                    label="Mission final position",
-
-                    zorder=8
-                )
 
             ax.set_title(
-
                 title,
-
-                color="#E2E8F0",
-
-                fontsize=10,
-
+                color=color,
+                fontsize=11,
                 fontweight="bold"
             )
 
             ax.set_xlabel(
-
                 "Generation",
-
                 color="#94A3B8",
-
-                fontsize=8
-            )
-
-            ax.set_ylabel(
-
-                ylabel,
-
-                color="#94A3B8",
-
-                fontsize=8
+                fontsize=9
             )
 
             ax.set_xlim(
                 0,
-                max(1, len(values) - 1)
+                max(1, S.generation)
             )
 
-            ax.tick_params(
+        fig.tight_layout(
+            pad=1.8
+        )
 
-                colors="#94A3B8",
-
-                labelsize=7
-            )
-
-            ax.grid(
-
-                True,
-
-                color="#334155",
-
-                linestyle="--",
-
-                linewidth=0.5,
-
-                alpha=0.4
-            )
-
-            for spine in ax.spines.values():
-
-                spine.set_color("#29384C")
-
-            if (
-
-                target is not None
-
-                or show_final_position
-            ):
-
-                legend = ax.legend(
-
-                    fontsize=7,
-
-                    facecolor="#111827",
-
-                    edgecolor="#29384C"
-                )
-
-                for text in legend.get_texts():
-
-                    text.set_color("#CBD5E1")
-
-            fig.tight_layout(
-                pad=1.2
-            )
-
-            encoded_image = figure_to_base64(fig)
-
-        finally:
-
-            plt.close(fig)
+        image = figure_to_base64(fig)
 
     st.html(f"""
-
     <img
         class="analysis-image"
-        src="data:image/png;base64,{encoded_image}"
-        alt="{escape(title)}"
-    />
-
+        src="data:image/png;base64,{image}"
+        alt="Performance analysis"
+    >
     """)
 
 
 # ============================================================
-# 23. HISTORY TABLE WITH PAGINATION
-# ============================================================
-
-def display_history_table():
-
-    history_df = pd.DataFrame({
-
-        "Generation": list(
-
-            range(
-                len(st.session_state.history)
-            )
-        ),
-
-        "Best Fitness": [
-
-            round(value, 2)
-
-            for value in st.session_state.history
-        ],
-
-        "Best Position": (
-
-            st.session_state.position_history
-        ),
-
-        "Step Size": [
-
-            round(value, 2)
-
-            for value in st.session_state.sigma_history
-        ],
-
-        "Distance": (
-
-            st.session_state.distance_history
-        ),
-
-        "Success Rate": [
-
-            f"{value:.0%}"
-
-            for value in st.session_state.success_history
-        ]
-    })
-
-    total_records = len(history_df)
-
-    total_pages = max(
-
-        1,
-
-        int(
-            np.ceil(
-                total_records / HISTORY_PAGE_SIZE
-            )
-        )
-    )
-
-    page = max(
-
-        0,
-
-        min(
-
-            st.session_state.history_page,
-
-            total_pages - 1
-        )
-    )
-
-    st.session_state.history_page = page
-
-    start = page * HISTORY_PAGE_SIZE
-
-    end = min(
-
-        start + HISTORY_PAGE_SIZE,
-
-        total_records
-    )
-
-    display_static_table(
-
-        history_df.iloc[start:end]
-    )
-
-    col1, col2, col3 = st.columns(
-        [1, 2, 1]
-    )
-
-    with col1:
-
-        st.button(
-
-            "◀ Previous",
-
-            key="history_previous",
-
-            disabled=(page == 0),
-
-            use_container_width=True,
-
-            on_click=change_history_page,
-
-            args=(-1,)
-        )
-
-    with col2:
-
-        st.html(f"""
-
-        <div class="table-page">
-
-            Page {page + 1} of {total_pages}
-
-        </div>
-
-        """)
-
-    with col3:
-
-        st.button(
-
-            "Next ▶",
-
-            key="history_next",
-
-            disabled=(
-                page >= total_pages - 1
-            ),
-
-            use_container_width=True,
-
-            on_click=change_history_page,
-
-            args=(1,)
-        )
-
-
-def change_history_page(direction):
-
-    st.session_state.history_page += direction
-
-
-# ============================================================
-# 24. PERFORMANCE ANALYSIS POP-UP
+# 29. PERFORMANCE ANALYSIS POP-UP
 # ============================================================
 
 @st.dialog(
-
     "Performance Analysis",
-
     width="large",
-
     dismissible=False
 )
 def performance_dialog():
 
-    strategy = st.session_state.settings[0]
-
-    best_x = get_best_position()
-
-    best_fitness = float(
-        fitness(best_x)
+    dataframe = pd.DataFrame(
+        S.history
     )
 
-    final_x = get_display_position()
+    display_analysis_chart()
 
-    generation = st.session_state.generation
-
-    if st.session_state.mission_success:
-
-        mission_status = "COMPLETE"
-
-        status_color = "#4ADE80"
-
-    elif st.session_state.mission_failed:
-
-        mission_status = (
-
-            st.session_state.failure_type
-        )
-
-        status_color = "#F87171"
-
-    else:
-
-        mission_status = "IN PROGRESS"
-
-        status_color = "#FBBF24"
-
-    cards = "".join([
-
-        result_metric_html(
-
-            "GENERATION",
-
-            generation,
-
-            "#67E8F9"
-        ),
-
-        result_metric_html(
-
-            "BEST FITNESS",
-
-            f"{best_fitness:.2f}",
-
-            "#FBBF24"
-        ),
-
-        result_metric_html(
-
-            "CURRENT / FINAL POSITION",
-
-            final_x,
-
-            "#67E8F9"
-        ),
-
-        result_metric_html(
-
-            "MISSION STATUS",
-
-            mission_status,
-
-            status_color
-        )
-    ])
-
-    st.html(f"""
-
-    <div class="result-grid">
-
-        {cards}
-
-    </div>
-
-    <div class="dialog-description">
-
-        Strategy: {escape(strategy)} Control
-
-        &nbsp; | &nbsp;
-
-        Initial Sigma:
-        {st.session_state.settings[1]:.2f}
-
-        &nbsp; | &nbsp;
-
-        Overshooting Offspring:
-        {st.session_state.overshoot_count}
-
-    </div>
-
-    """)
-
-    analysis_tab = st.radio(
-
-        "Analysis Type",
-
-        [
-
-            "Fitness",
-
-            "Step Size",
-
-            "Position",
-
-            "Success Rate",
-
-            "History"
-        ],
-
-        horizontal=True,
-
-        key="analysis_tab",
-
-        label_visibility="collapsed"
+    section_heading(
+        "GENERATION HISTORY"
     )
 
-    if analysis_tab == "Fitness":
+    page_size = 4
 
-        display_analysis_chart(
-
-            st.session_state.history,
-
-            "Best Surviving Fitness",
-
-            "Fitness",
-
-            "#FBBF24",
-
-            target=TARGET_FITNESS
+    total_pages = max(
+        1,
+        int(
+            np.ceil(
+                len(dataframe) / page_size
+            )
         )
+    )
 
-        st.html("""
+    S.history_page = max(
+        0,
+        min(
+            S.history_page,
+            total_pages - 1
+        )
+    )
 
-        <div class="dialog-description">
+    start = S.history_page * page_size
+    end = start + page_size
 
-            Shows how the fitness of the best
-            surviving individual changes over time.
+    page = dataframe.iloc[
+        start:end
+    ].copy()
+
+    page["Fitness"] = page[
+        "Fitness"
+    ].map(
+        lambda value: f"{value:.2f}"
+    )
+
+    page["Sigma"] = page[
+        "Sigma"
+    ].map(
+        lambda value: f"{value:.2f}"
+    )
+
+    page["Success Rate"] = page[
+        "Success Rate"
+    ].map(
+        lambda value: (
+            "—"
+            if pd.isna(value)
+            else f"{value:.0%}"
+        )
+    )
+
+    static_table(page)
+
+    left, middle, right = st.columns(
+        [1, 2, 1]
+    )
+
+    with left:
+
+        if st.button(
+            "◀ Previous",
+            key="history_previous",
+            disabled=S.history_page == 0,
+            use_container_width=True
+        ):
+
+            change_history_page(-1)
+            st.rerun(scope="fragment")
+
+    with middle:
+
+        st.html(f"""
+        <div class="small-text"
+             style="
+                 text-align:center;
+                 padding:8px;
+             ">
+
+            Page {S.history_page + 1}
+            of {total_pages}
 
         </div>
-
         """)
 
-    elif analysis_tab == "Step Size":
+    with right:
 
-        display_analysis_chart(
+        if st.button(
+            "Next ▶",
+            key="history_next",
+            disabled=(
+                S.history_page >= total_pages - 1
+            ),
+            use_container_width=True
+        ):
 
-            st.session_state.sigma_history,
-
-            "Mutation Step Size",
-
-            "Sigma",
-
-            "#E879F9"
-        )
-
-        st.html("""
-
-        <div class="dialog-description">
-
-            Shows how the selected parameter
-            control strategy changes mutation
-            step size.
-
-        </div>
-
-        """)
-
-    elif analysis_tab == "Position":
-
-        display_analysis_chart(
-
-            st.session_state.position_history,
-
-            "Position Towards Global Optimum",
-
-            "Position",
-
-            "#22D3EE",
-
-            target=TARGET_POSITION,
-
-            show_final_position=True
-        )
-
-        st.html("""
-
-        <div class="dialog-description">
-
-            The gold line represents position 79.
-            The final mission marker also shows
-            an overshooting offspring, even if
-            it was rejected during selection.
-
-        </div>
-
-        """)
-
-    elif analysis_tab == "Success Rate":
-
-        display_analysis_chart(
-
-            [
-
-                value * 100
-
-                for value in
-                st.session_state.success_history
-            ],
-
-            "Mutation Improvement Rate",
-
-            "Success Rate (%)",
-
-            "#4ADE80",
-
-            target=20
-        )
-
-        st.html("""
-
-        <div class="dialog-description">
-
-            The 20% reference line represents
-            the threshold used by Adaptive Control.
-
-        </div>
-
-        """)
-
-    else:
-
-        display_history_table()
+            change_history_page(1)
+            st.rerun(scope="fragment")
 
     if st.button(
-
         "CLOSE",
-
         key="close_performance",
-
         use_container_width=True
     ):
 
         close_dialog()
-
         st.rerun()
 
 
 # ============================================================
-# 25. POPULATION DETAILS POP-UP
+# 30. POPULATION DETAILS POP-UP
 # ============================================================
 
 @st.dialog(
-
     "Population Details",
-
     width="large",
-
     dismissible=False
 )
 def population_dialog():
 
-    generation = st.session_state.generation
-
-    strategy = st.session_state.settings[0]
-
-    st.html(f"""
-
-    <div class="dialog-description">
-
-        Generation: {generation}
-
-        &nbsp; | &nbsp;
-
-        Population Size: {POPULATION_SIZE}
-
-        &nbsp; | &nbsp;
-
-        Strategy: {escape(strategy)}
-
-    </div>
-
-    """)
-
-    population_view = st.radio(
-
-        "Population View",
-
-        [
-
-            "Surviving Population",
-
-            "Latest Mutations"
-        ],
-
-        horizontal=True,
-
-        key="population_view",
-
-        label_visibility="collapsed"
+    section_heading(
+        "CURRENT SURVIVING POPULATION"
     )
 
+    population_data = []
 
-    # --------------------------------------------------------
-    # SURVIVING POPULATION
-    # --------------------------------------------------------
+    for i, (position, sigma) in enumerate(
+        S.population
+    ):
 
-    if population_view == "Surviving Population":
+        population_data.append({
 
-        rows = []
+            "Individual": i + 1,
 
-        for i, (x, sigma) in enumerate(
+            "Position": position,
 
-            st.session_state.population
-        ):
+            "Fitness": (
+                f"{fitness(position):.2f}"
+            ),
 
-            if x == TARGET_POSITION:
+            "Sigma": (
+                f"{sigma:.2f}"
+            ),
 
-                status = "Exact Hit"
+            "Distance": abs(
+                TARGET_POSITION - position
+            )
+        })
 
-            elif x > TARGET_POSITION:
+    static_table(
+        pd.DataFrame(population_data)
+    )
 
-                status = "Overshoot"
+    if (
+        S.game_mode == "Practice"
+        and not S.game_finished
+    ):
 
-            else:
-
-                status = "Below Target"
-
-            rows.append({
-
-                "Individual": i + 1,
-
-                "Position": int(x),
-
-                "Fitness": round(
-                    float(fitness(x)), 2
-                ),
-
-                "Sigma": round(sigma, 2),
-
-                "Distance": abs(
-                    TARGET_POSITION - x
-                ),
-
-                "Status": status
-            })
-
-        display_static_table(
-
-            pd.DataFrame(rows)
+        section_heading(
+            "PROPOSED MUTATIONS"
         )
 
-        st.html("""
-
-        <div class="dialog-description">
-
-            These individuals were retained
-            through fitness-based survival selection.
-
-            The offspring responsible for mission
-            failure may not be part of this population.
-
-        </div>
-
-        """)
-
-
-    # --------------------------------------------------------
-    # LATEST MUTATIONS
-    # --------------------------------------------------------
+        mutations = generate_mutations()
 
     else:
 
-        if not st.session_state.last_mutations:
+        section_heading(
+            "LAST GENERATION MUTATIONS"
+        )
 
-            st.info(
+        mutations = S.last_mutations
 
-                "Run the first generation to view "
-                "mutation details."
-            )
+    if mutations:
 
-        else:
+        mutation_data = []
 
-            mutation_df = pd.DataFrame(
+        for mutation in mutations:
 
-                st.session_state.last_mutations
-            )
+            mutation_data.append({
 
-            display_static_table(
+                "Individual": (
+                    mutation["individual"]
+                ),
 
-                mutation_df[[
+                "Parent": mutation["parent"],
 
-                    "Individual",
+                "Offspring": (
+                    mutation["position"]
+                ),
 
-                    "Parent",
+                "Movement": (
+                    mutation["movement"]
+                ),
 
-                    "Offspring",
+                "Sigma": (
+                    f"{mutation['sigma']:.2f}"
+                ),
 
-                    "Movement",
+                "Result": mutation["result"]
+            })
 
-                    "Sigma",
+        static_table(
+            pd.DataFrame(mutation_data)
+        )
 
-                    "Target Result"
-                ]]
-            )
+    else:
 
-            st.html("""
-
-            <div class="dialog-description">
-
-                EXACT HIT = position 79.
-
-                <br>
-
-                OVERSHOOT = position greater than 79.
-
-                <br>
-
-                BELOW TARGET = position less than 79.
-
-            </div>
-
-            """)
+        st.html("""
+        <div class="small-text">
+            No accepted mutations to display.
+        </div>
+        """)
 
     if st.button(
-
         "CLOSE",
-
         key="close_population",
-
         use_container_width=True
     ):
 
         close_dialog()
-
         st.rerun()
 
 
 # ============================================================
-# 26. LEARNING GUIDE CONTENT
+# 31. LEARNING GUIDE CONTENT
 # ============================================================
 
-LEARNING_CONTENT = {
+GUIDE_CONTENT = {
 
-    "Game Rules": {
+    "Manual Control": {
 
-        "title": "Exact Peak Challenge",
-
-        "color": "#FBBF24",
+        "color": "#4ADE80",
 
         "description": (
-
-            "Your objective is to evolve a population "
-            "that lands exactly at position 79."
+            "Practice Mode allows you to manually "
+            "adjust mutation step size before "
+            "accepting a generation."
         ),
 
         "points": [
 
-            "All five individuals begin at position 10.",
+            "Large sigma encourages wider exploration.",
 
-            "An offspring at exactly 79 completes "
-            "the mission.",
+            "Small sigma allows more precise movement.",
 
-            "An offspring above 79 causes immediate "
-            "failure unless another offspring hits 79 "
-            "in the same generation.",
+            "Changing sigma does not consume a turn.",
 
-            "Remaining below 79 after generation 30 "
-            "causes mission failure."
+            "Accept Mutation applies all five offspring.",
+
+            "Retry Mutation rejects the proposal "
+            "but consumes one turn."
         ],
 
         "example": (
-
-            "Position 78 → 79: Mission Complete. "
-            "Position 78 → 83: Mission Failed."
+            "If an offspring overshoots position 79, "
+            "reduce sigma and inspect the new preview."
         )
     },
 
-    "Deterministic": {
-
-        "title": "Deterministic Parameter Control",
+    "Deterministic Control": {
 
         "color": "#22D3EE",
 
         "description": (
-
-            "The mutation step size follows a "
-            "predefined schedule."
+            "The parameter follows a predefined "
+            "schedule regardless of mutation performance."
         ),
 
         "points": [
 
-            "The initial step size is selected "
-            "by the player.",
+            "Sigma starts at the selected initial value.",
 
-            "Step size decreases as the generation "
-            "number increases.",
+            "Sigma decreases after every generation.",
 
-            "Larger early steps encourage exploration.",
+            "The schedule does not use fitness feedback.",
 
-            "Smaller later steps encourage refinement."
+            "Early generations encourage exploration.",
+
+            "Later generations encourage refinement."
         ],
 
         "example": (
-
-            "With initial sigma 30, the step size "
-            "becomes 29 after generation 1 and "
-            "15 after generation 15."
+            "σ(t) = max(0.5, σ₀ × (1 − t/30))."
         )
     },
 
-    "Adaptive": {
-
-        "title": "Adaptive Parameter Control",
+    "Adaptive Control": {
 
         "color": "#FBBF24",
 
         "description": (
-
-            "The mutation step size changes according "
-            "to the success rate of recent mutations."
+            "The parameter changes using feedback "
+            "from mutation performance."
         ),
 
         "points": [
 
-            "Success rate above 20%: "
-            "increase sigma by 25%.",
+            "Calculate the proportion of offspring "
+            "that improve their parent's fitness.",
 
-            "Success rate below 20%: "
-            "decrease sigma by 20%.",
+            "Success rate above 20%: multiply sigma by 1.25.",
 
-            "Success rate equal to 20%: "
-            "keep sigma unchanged.",
+            "Success rate below 20%: multiply sigma by 0.8.",
 
-            "Larger sigma may increase the chance "
-            "of overshooting the target."
+            "Success rate equal to 20%: maintain sigma.",
+
+            "The adjustment is based on the 1/5 Success Rule."
         ],
 
         "example": (
-
-            "If three out of five mutations improve "
-            "fitness, the success rate is 60%. "
-            "Sigma 20 increases to 25."
+            "Three successful mutations out of five "
+            "give a 60% success rate. Sigma increases."
         )
     },
 
-    "Self-Adaptive": {
-
-        "title": "Self-Adaptive Parameter Control",
+    "Self-Adaptive Control": {
 
         "color": "#E879F9",
 
         "description": (
-
-            "Each individual carries its own mutation "
-            "step size as part of its representation."
+            "Each individual carries its own "
+            "mutation step size as part of its representation."
         ),
 
         "points": [
 
-            "Each individual starts with the selected "
-            "initial sigma.",
+            "Every individual has a position and sigma.",
 
-            "Sigma itself undergoes mutation.",
+            "Sigma is mutated before position mutation.",
 
-            "Individuals can evolve different "
-            "mutation step sizes.",
+            "Different individuals may have different sigma.",
 
-            "Fitness-based selection determines "
-            "which individuals and sigmas survive."
+            "Fitness-based selection determines survivors.",
+
+            "Successful individuals pass their sigma "
+            "to subsequent generations."
         ],
 
         "example": (
-
-            "Individual 1 may evolve sigma 8 while "
-            "Individual 2 evolves sigma 25. "
-            "Their mutation movements can therefore "
-            "have different magnitudes."
+            "σ′ = σ × exp(0.4 × N(0,1)). "
+            "The new sigma controls position mutation."
         )
     },
 
-    "Step Size": {
+    "Mission Rules": {
 
-        "title": "Mutation Step Size (Sigma)",
-
-        "color": "#67E8F9",
+        "color": "#FBBF24",
 
         "description": (
-
-            "Sigma controls the spread of random "
-            "mutation movements."
+            "The game uses an integer-position fitness "
+            "landscape with a strict target at position 79."
         ),
 
         "points": [
 
-            "Small sigma produces generally "
-            "smaller movements.",
+            "The population starts at position 10.",
 
-            "Large sigma produces a wider range "
-            "of possible movements.",
+            "The local optimum is near position 27.",
 
-            "Large movements can escape a local "
-            "optimum but may overshoot.",
+            "Any offspring above position 79 "
+            "causes immediate mission failure.",
 
-            "Small movements can refine a solution "
-            "but may become trapped."
+            "An exact hit at position 79 wins "
+            "if no offspring overshoots.",
+
+            "Failure also occurs after 30 turns "
+            "without reaching the target."
         ],
 
         "example": (
-
-            "At position 75, a movement of +4 "
-            "wins the mission. A movement of +10 "
-            "overshoots to position 85."
+            "Position 78: continue. "
+            "Position 79: win. "
+            "Position 80: overshoot."
         )
     }
 }
 
 
 # ============================================================
-# 27. LEARNING GUIDE POP-UP
+# 32. LEARNING GUIDE POP-UP
 # ============================================================
 
 @st.dialog(
-
     "Learning Guide",
-
     width="large",
-
     dismissible=False
 )
 def learning_dialog():
 
-    selected_topic = st.radio(
-
+    topic = st.selectbox(
         "Learning Topic",
-
-        list(
-            LEARNING_CONTENT.keys()
+        options=list(
+            GUIDE_CONTENT.keys()
         ),
-
-        horizontal=True,
-
-        key="learning_topic",
-
-        label_visibility="collapsed"
+        key="guide_topic"
     )
 
-    content = LEARNING_CONTENT[
-        selected_topic
-    ]
+    content = GUIDE_CONTENT[topic]
 
-    points_html = "".join([
+    points_html = "".join(
 
-        f"""
-
-        <div class="guide-point">
-
-            {escape(point)}
-
-        </div>
-
-        """
+        f'<div class="guide-point">'
+        f'{escape(point)}'
+        f'</div>'
 
         for point in content["points"]
-    ])
+    )
 
     st.html(f"""
-
     <div class="guide-card">
 
         <div class="guide-title"
-             style="color:{content['color']};">
+             style="color:{content['color']}">
 
-            {escape(content['title'])}
+            {escape(topic)}
 
         </div>
 
-        <div class="guide-description">
+        <div class="panel-text"
+             style="margin-bottom:10px">
 
             {escape(content['description'])}
 
@@ -5431,368 +3661,418 @@ def learning_dialog():
 
         {points_html}
 
-        <div class="guide-example">
+        <div class="panel-card">
 
-            <strong>Example:</strong>
+            <div class="panel-title"
+                 style="color:#FBBF24">
 
-            {escape(content['example'])}
+                EXAMPLE
+
+            </div>
+
+            <div class="panel-text">
+
+                {escape(content['example'])}
+
+            </div>
 
         </div>
 
     </div>
-
     """)
 
     if st.button(
-
         "CLOSE",
-
         key="close_learning",
-
         use_container_width=True
     ):
 
         close_dialog()
-
         st.rerun()
 
 
 # ============================================================
-# 28. MAIN DASHBOARD
+# 33. PRACTICE MODE CONTROL PANEL
+# ============================================================
+
+def display_practice_controls():
+
+    section_heading(
+        "01 / MANUAL PARAMETER CONTROL"
+    )
+
+    panel_card(
+        "🎮 Practice Mode",
+        STRATEGIES["Manual"]["description"],
+        "#4ADE80"
+    )
+
+    section_heading(
+        "02 / MUTATION STEP SIZE"
+    )
+
+    st.slider(
+        "Mutation Step Size (σ)",
+        min_value=0.5,
+        max_value=30.0,
+        step=0.5,
+        key="manual_sigma",
+        disabled=S.game_finished
+    )
+
+    st.html("""
+    <div class="small-text">
+
+        Small σ = precise movement.<br>
+        Large σ = wider exploration.<br>
+        Adjusting sigma does not reset the game.
+
+    </div>
+    """)
+
+    section_heading(
+        "03 / SIMULATION CONTROLS"
+    )
+
+    st.button(
+        "✓ ACCEPT MUTATION",
+        key="accept_mutation",
+        type="primary",
+        disabled=S.game_finished,
+        use_container_width=True,
+        on_click=next_generation
+    )
+
+    st.button(
+        "↻ RETRY MUTATION",
+        key="retry_mutation",
+        disabled=S.game_finished,
+        use_container_width=True,
+        on_click=retry_mutation
+    )
+
+    st.button(
+        "↺ RESET SIMULATION",
+        key="practice_reset",
+        use_container_width=True,
+        on_click=handle_reset
+    )
+
+    display_strategic_hint()
+
+    st.html("""
+    <div class="panel-card">
+
+        <div class="panel-title"
+             style="color:#67E8F9">
+
+            MISSION OBJECTIVE
+
+        </div>
+
+        <div class="small-text">
+
+            Reach exactly
+            <strong style="color:#FBBF24">
+                POSITION 79
+            </strong>
+            within 30 turns.<br>
+
+            <span style="color:#4ADE80">
+                Exact hit = Mission Complete
+            </span><br>
+
+            <span style="color:#F87171">
+                Overshoot = Immediate Failure
+            </span>
+
+        </div>
+
+    </div>
+    """)
+
+
+# ============================================================
+# 34. CHALLENGE MODE CONTROL PANEL
+# ============================================================
+
+def display_challenge_controls():
+
+    section_heading(
+        "01 / PARAMETER CONTROL"
+    )
+
+    strategy = st.radio(
+        "Parameter Control",
+        options=[
+            "Deterministic",
+            "Adaptive",
+            "Self-Adaptive"
+        ],
+        key="selected_strategy",
+        label_visibility="collapsed",
+        on_change=handle_settings_change
+    )
+
+    strategy_info = STRATEGIES[strategy]
+
+    panel_card(
+        f"{strategy} Control",
+        strategy_info["description"],
+        strategy_info["color"]
+    )
+
+    section_heading(
+        "02 / INITIAL STEP SIZE"
+    )
+
+    st.slider(
+        "Mutation Step Size (σ)",
+        min_value=1,
+        max_value=30,
+        step=1,
+        key="initial_sigma",
+        on_change=handle_settings_change
+    )
+
+    st.html("""
+    <div class="small-text">
+
+        Small σ = finer movements.<br>
+        Large σ = wider exploration and overshoot risk.<br>
+        Changing settings resets the mission.
+
+    </div>
+    """)
+
+    section_heading(
+        "03 / SIMULATION CONTROLS"
+    )
+
+    st.button(
+        "▶ NEXT GENERATION",
+        key="next_generation",
+        type="primary",
+        disabled=S.game_finished,
+        use_container_width=True,
+        on_click=next_generation
+    )
+
+    st.button(
+        "⏩ RUN ALL GENERATIONS",
+        key="run_all",
+        disabled=S.game_finished,
+        use_container_width=True,
+        on_click=handle_run_all
+    )
+
+    st.button(
+        "↺ RESET SIMULATION",
+        key="challenge_reset",
+        use_container_width=True,
+        on_click=handle_reset
+    )
+
+    st.html("""
+    <div class="panel-card">
+
+        <div class="panel-title"
+             style="color:#67E8F9">
+
+            MISSION OBJECTIVE
+
+        </div>
+
+        <div class="small-text">
+
+            Reach exactly
+            <strong style="color:#FBBF24">
+                POSITION 79
+            </strong>
+            within 30 generations.<br>
+
+            <span style="color:#4ADE80">
+                Exact hit = Mission Complete
+            </span><br>
+
+            <span style="color:#F87171">
+                Overshoot = Immediate Failure
+            </span><br>
+
+            Reset repeats the same random challenge.
+
+        </div>
+
+    </div>
+    """)
+
+
+# ============================================================
+# 35. MAIN DASHBOARD
 # ============================================================
 
 def display_dashboard():
 
     display_header()
 
-    with st.container(key="main_dashboard"):
+    with st.container(
+        key="main_dashboard"
+    ):
 
-        left_column, right_column = st.columns(
-
-            [1, 3],
-
+        left, right = st.columns(
+            [1, 3.05],
             gap="medium"
         )
 
-
-        # ====================================================
+        # ----------------------------------------------------
         # LEFT CONTROL PANEL
-        # ====================================================
+        # ----------------------------------------------------
 
-        with left_column:
+        with left:
 
-            with st.container(key="left_panel"):
+            with st.container(
+                key="left_panel"
+            ):
 
-                section_heading(
+                if S.game_mode == "Practice":
 
-                    "01 / PARAMETER CONTROL"
-                )
+                    display_practice_controls()
 
-                strategy = st.radio(
+                else:
 
-                    "Parameter Control Strategy",
+                    display_challenge_controls()
 
-                    list(STRATEGIES.keys()),
-
-                    key="selected_strategy",
-
-                    label_visibility="collapsed",
-
-                    on_change=handle_settings_change
-                )
-
-                strategy_info = STRATEGIES[
-                    strategy
-                ]
-
-                st.html(f"""
-
-                <div class="strategy-description">
-
-                    <div
-                        class="strategy-description-title"
-                        style="
-                            color:{strategy_info['color']};
-                        "
-                    >
-
-                        {strategy_info['icon']}
-
-                        {escape(strategy)} Control
-
-                    </div>
-
-                    <div class="strategy-description-text">
-
-                        {escape(strategy_info['description'])}
-
-                    </div>
-
-                </div>
-
-                """)
-
-
-                # --------------------------------------------
-                # INITIAL STEP SIZE
-                # --------------------------------------------
-
-                section_heading(
-
-                    "02 / INITIAL STEP SIZE"
-                )
-
-                st.slider(
-
-                    "Mutation Step Size (σ)",
-
-                    min_value=1,
-
-                    max_value=30,
-
-                    step=1,
-
-                    key="initial_sigma",
-
-                    on_change=handle_settings_change
-                )
-
-                st.html("""
-
-                <div class="slider-help">
-
-                    Small σ = finer movements.
-
-                    <br>
-
-                    Large σ = wider exploration
-                    and overshoot risk.
-
-                    <br>
-
-                    Changing settings resets the mission.
-
-                </div>
-
-                """)
-
-
-                # --------------------------------------------
-                # SIMULATION CONTROLS
-                # --------------------------------------------
-
-                section_heading(
-
-                    "03 / SIMULATION CONTROLS"
-                )
-
-                st.button(
-
-                    "▶ NEXT GENERATION",
-
-                    key="next_generation_button",
-
-                    type="primary",
-
-                    use_container_width=True,
-
-                    disabled=(
-                        st.session_state.game_finished
-                    ),
-
-                    on_click=handle_next_generation
-                )
-
-                st.button(
-
-                    "⏩ RUN ALL GENERATIONS",
-
-                    key="run_all_button",
-
-                    use_container_width=True,
-
-                    disabled=(
-                        st.session_state.game_finished
-                    ),
-
-                    on_click=handle_run_all
-                )
-
-                st.button(
-
-                    "↻ RESET SIMULATION",
-
-                    key="reset_simulation_button",
-
-                    use_container_width=True,
-
-                    on_click=handle_reset
-                )
-
-
-                # --------------------------------------------
-                # MISSION OBJECTIVE
-                # --------------------------------------------
-
-                st.html("""
-
-                <div class="mission-card">
-
-                    <div class="mission-title">
-
-                        MISSION OBJECTIVE
-
-                    </div>
-
-                    <div class="mission-text">
-
-                        Reach exactly
-
-                        <span class="mission-target">
-                            POSITION 79
-                        </span>
-
-                        within 30 generations.
-
-                        <br>
-
-                        <span style="color:#4ADE80;">
-                            Exact hit = Mission Complete
-                        </span>
-
-                        <br>
-
-                        <span style="color:#F87171;">
-                            Overshoot = Immediate Failure
-                        </span>
-
-                    </div>
-
-                </div>
-
-                """)
-
-
-        # ====================================================
+        # ----------------------------------------------------
         # RIGHT VISUALIZATION PANEL
-        # ====================================================
+        # ----------------------------------------------------
 
-        with right_column:
+        with right:
 
-            with st.container(key="right_panel"):
+            with st.container(
+                key="right_panel"
+            ):
 
-                display_metrics(strategy)
+                display_metrics()
+
+                display_phase_indicator()
 
                 section_heading(
-
                     "FITNESS LANDSCAPE"
                 )
 
-                display_fitness_landscape(
-
-                    STRATEGIES[strategy]["color"]
-                )
+                display_fitness_landscape()
 
                 display_target_status()
 
+                if (
+                    S.game_mode == "Practice"
+                    and not S.game_finished
+                ):
+
+                    display_mutation_preview()
+
                 display_feedback()
 
-                if st.session_state.game_finished:
+                if S.game_finished:
 
                     st.button(
-
                         "VIEW MISSION RESULT",
-
-                        key="view_result_button",
-
+                        key="view_mission_result",
                         use_container_width=True,
-
                         on_click=open_dialog,
-
                         args=("result",)
                     )
 
-
-    # ========================================================
+    # --------------------------------------------------------
     # BOTTOM NAVIGATION
-    # ========================================================
+    # --------------------------------------------------------
 
-    with st.container(key="bottom_navigation"):
+    with st.container(
+        key="bottom_navigation"
+    ):
 
-        p1, p2, p3, p4 = st.columns(4)
+        a, b, c, d = st.columns(4)
 
-        with p1:
+        with a:
 
             st.button(
-
                 "📊 Performance Analysis",
-
                 key="performance_button",
-
                 use_container_width=True,
-
                 on_click=open_dialog,
-
                 args=("performance",)
             )
 
-        with p2:
+        with b:
 
             st.button(
-
                 "🧬 Population Details",
-
                 key="population_button",
-
                 use_container_width=True,
-
                 on_click=open_dialog,
-
                 args=("population",)
             )
 
-        with p3:
+        with c:
 
             st.button(
-
                 "📖 Learning Guide",
-
                 key="learning_button",
-
                 use_container_width=True,
-
                 on_click=open_dialog,
-
                 args=("learning",)
             )
 
-        with p4:
+        with d:
 
             st.button(
-
                 "🏠 Main Menu",
-
                 key="main_menu_button",
-
                 use_container_width=True,
-
                 on_click=handle_home
             )
 
 
 # ============================================================
-# 29. APPLICATION ROUTING
+# 36. APPLICATION ROUTING
 # ============================================================
 
-if not st.session_state.game_started:
+if not S.game_started:
 
     display_welcome_screen()
 
 else:
 
+    # Restore widget state when switching modes.
+    # Streamlit may remove widget keys when hidden.
+
+    if "selected_strategy" not in S:
+
+        S.selected_strategy = (
+            S.settings[0]
+            if S.settings[0] != "Manual"
+            else "Deterministic"
+        )
+
+    if "initial_sigma" not in S:
+
+        S.initial_sigma = (
+            int(S.settings[1])
+            if S.settings[0] != "Manual"
+            else 15
+        )
+
+    if "manual_sigma" not in S:
+
+        S.manual_sigma = (
+            float(S.sigma)
+            if S.game_mode == "Practice"
+            else 20.0
+        )
+
     display_dashboard()
 
-    active_dialog = st.session_state.active_dialog
+    active_dialog = S.active_dialog
 
     if active_dialog == "result":
 
