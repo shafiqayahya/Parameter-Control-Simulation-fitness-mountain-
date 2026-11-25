@@ -181,8 +181,13 @@ st.markdown(
     }}
 
     .stButton > button:disabled {{
-        opacity: 0.4;
-    }}
+    opacity: 1;
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid #22D3EE;
+    color: #67E8F9 !important;
+    font-weight: 600;
+    cursor: not-allowed;
+}}
 
     [data-testid="stExpander"] {{
         background: rgba(15, 23, 42, 0.85);
@@ -796,28 +801,26 @@ st.caption(
     "Gold star: global optimum"
 )
 
+
 # ==================================================
 # LIVE FEEDBACK
 # ==================================================
 
 st.markdown(
-    f"""
-    <div class="feedback-box">
-
-        <strong style="
-            color:#FBBF24;
-            letter-spacing:2px;
-            font-size:12px;
-        ">
-            LIVE EVOLUTION FEEDBACK
-        </strong>
-
-        <br><br>
-
-        {st.session_state.feedback}
-
-    </div>
-    """,
+    '<div class="feedback-box">'
+    '<div style="color:#FBBF24;'
+    'letter-spacing:2px;'
+    'font-size:12px;'
+    'font-weight:700;'
+    'margin-bottom:12px;">'
+    'LIVE EVOLUTION FEEDBACK'
+    '</div>'
+    '<div style="color:#E2E8F0;'
+    'font-size:15px;'
+    'line-height:1.6;">'
+    f'{st.session_state.feedback}'
+    '</div>'
+    '</div>',
     unsafe_allow_html=True
 )
 
