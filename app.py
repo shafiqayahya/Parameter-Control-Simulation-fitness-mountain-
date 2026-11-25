@@ -1275,13 +1275,18 @@ left, right = st.columns(
 )
 
 
+
 # ==================================================
 # LEFT PANEL — GAME CONTROLS
 # ==================================================
 
 with left:
 
-    with st.container(border=True):
+    # ==============================================
+    # 01 — CONTROL PANEL
+    # ==============================================
+
+    with st.container(border=True, key="control_panel"):
 
         section_label("01 / CONTROL PANEL")
 
@@ -1296,24 +1301,20 @@ with left:
 
         accent = STRATEGIES[strategy]["color"]
 
-        description = (
-            STRATEGIES[strategy]["description"]
-        )
+        description = STRATEGIES[strategy]["description"]
 
         st.markdown(
             f'<div class="strategy-info" '
             f'style="border-left:3px solid {accent};">'
             f'<strong style="color:{accent};">'
             f'{strategy} Control'
-            f'</strong><br>'
+            f'</strong>'
+            f'<div style="margin-top:5px;">'
             f'{description}'
+            f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-
-        # ------------------------------------------
-        # INITIAL MUTATION STEP SIZE
-        # ------------------------------------------
 
         initial_sigma = st.slider(
             "Initial Mutation Step Size (σ)",
@@ -1327,36 +1328,35 @@ with left:
             "Small σ: refinement"
         )
 
-        # ------------------------------------------
-        # INITIALIZE SESSION
-        # ------------------------------------------
+    # ==============================================
+    # INITIALIZE SESSION
+    # ==============================================
 
-        settings = (
+    settings = (
+        strategy,
+        initial_sigma
+    )
+
+    if (
+        "generation" not in st.session_state
+        or st.session_state.get("settings") != settings
+        or "sigma_history" not in st.session_state
+    ):
+
+        reset_simulation(
             strategy,
             initial_sigma
         )
 
-        if (
-            "generation" not in st.session_state
-            or st.session_state.get("settings")
-            != settings
-            or "sigma_history"
-            not in st.session_state
-        ):
+    finished = (
+        st.session_state.generation >= MAX_GENERATIONS
+    )
 
-            reset_simulation(
-                strategy,
-                initial_sigma
-            )
+    # ==============================================
+    # 02 — GAME CONTROLS
+    # ==============================================
 
-        finished = (
-            st.session_state.generation
-            >= MAX_GENERATIONS
-        )
-
-        # ------------------------------------------
-        # GAME CONTROLS
-        # ------------------------------------------
+    with st.container(border=True, key="game_panel"):
 
         section_label("02 / GAME CONTROLS")
 
@@ -1410,9 +1410,11 @@ with left:
 
                 st.rerun()
 
-        # ------------------------------------------
-        # MISSION
-        # ------------------------------------------
+    # ==============================================
+    # 03 — YOUR MISSION
+    # ==============================================
+
+    with st.container(border=True, key="mission_panel"):
 
         section_label("03 / YOUR MISSION")
 
@@ -1424,7 +1426,6 @@ with left:
             '</div>',
             unsafe_allow_html=True
         )
-
 
 # ==================================================
 # RIGHT PANEL — GAME DISPLAY
