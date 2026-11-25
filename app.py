@@ -1,8 +1,11 @@
+
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import base64
+
 from pathlib import Path
+from html import escape
 
 # ==================================================
 # PAGE CONFIGURATION
@@ -16,36 +19,48 @@ st.set_page_config(
 )
 
 # ==================================================
-# BACKGROUND AND CUSTOM UI
+# BACKGROUND
 # ==================================================
 
-image_path = Path(__file__).parent / "background.jpg"
+@st.cache_data
+def load_background():
 
-encoded = ""
+    path = Path(__file__).parent / "background.jpg"
 
-if image_path.exists():
-    encoded = base64.b64encode(
-        image_path.read_bytes()
-    ).decode()
+    if path.exists():
+        return base64.b64encode(
+            path.read_bytes()
+        ).decode()
+
+    return ""
+
+
+background = load_background()
+
+# ==================================================
+# CUSTOM CSS
+# ==================================================
 
 st.markdown(
     f"""
     <style>
 
     .stApp {{
-        background-color: #070B16;
+        background: #070B16;
     }}
 
     .stApp::before {{
         content: "";
         position: fixed;
         inset: 0;
+
         background-image:
             linear-gradient(
-                rgba(5, 10, 25, 0.92),
-                rgba(5, 10, 25, 0.92)
+                rgba(5, 10, 25, 0.85),
+                rgba(5, 10, 25, 0.85)
             ),
-            url("data:image/jpeg;base64,{encoded}");
+            url("data:image/jpeg;base64,{background}");
+
         background-size: cover;
         background-position: center;
         filter: blur(4px);
@@ -64,97 +79,96 @@ st.markdown(
         background: transparent;
     }}
 
-    .block-container {{
-        max-width: 1150px;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }}
-
     [data-testid="stSidebar"] {{
         display: none;
     }}
 
+    .block-container {{
+        max-width: 1500px;
+        padding-top: 1.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }}
+
+    [data-testid="stVerticalBlock"] {{
+        gap: 0.45rem;
+    }}
+
+    [data-testid="stHorizontalBlock"] {{
+        gap: 1rem;
+    }}
+
+    /* HEADER */
+
     .hero {{
         text-align: center;
-        padding: 25px 10px 30px;
+        padding: 0 0 8px;
     }}
 
     .hero-label {{
         color: #22D3EE;
-        font-size: 12px;
+        font-size: 10px;
         letter-spacing: 5px;
         font-weight: 600;
     }}
 
     .hero-title {{
-        font-size: clamp(32px, 6vw, 60px);
+        color: #E0F2FE;
+        font-size: clamp(26px, 3vw, 40px);
         font-weight: 900;
         letter-spacing: 4px;
-        color: #E0F2FE;
-        text-shadow: 0 0 25px #0891B2;
-        margin: 8px 0;
+        line-height: 1.2;
+        text-shadow: 0 0 22px #0891B2;
+        margin: 4px 0;
     }}
 
     .hero-subtitle {{
         color: #94A3B8;
-        font-size: 14px;
-        letter-spacing: 3px;
+        font-size: 11px;
+        letter-spacing: 2px;
     }}
 
-    .mission {{
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #164E63;
-        border-left: 4px solid #22D3EE;
-        border-radius: 12px;
-        padding: 18px 22px;
-        margin-bottom: 22px;
-        color: #CBD5E1;
-    }}
+    /* SECTION TITLE */
 
     .section-label {{
         color: #67E8F9;
-        font-size: 12px;
-        letter-spacing: 3px;
+        font-size: 11px;
         font-weight: 700;
-        margin-top: 18px;
-        margin-bottom: 12px;
+        letter-spacing: 2px;
+        margin: 4px 0;
     }}
 
-    .strategy-card {{
-        background: rgba(15, 23, 42, 0.85);
+    /* CONTROL PANEL */
+
+    .strategy-info {{
+        background: rgba(15, 23, 42, 0.88);
         border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 18px 10px;
-        text-align: center;
-        min-height: 120px;
-    }}
-
-    .strategy-icon {{
-        font-size: 28px;
-        margin-bottom: 8px;
-    }}
-
-    .strategy-title {{
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }}
-
-    .strategy-description {{
-        color: #94A3B8;
+        border-radius: 8px;
+        padding: 10px 12px;
         font-size: 12px;
+        line-height: 1.5;
+        color: #CBD5E1;
+        min-height: 70px;
     }}
+
+    [data-testid="stRadio"] label {{
+        font-size: 14px;
+    }}
+
+    /* STATISTICS */
 
     [data-testid="stMetric"] {{
-        background: rgba(15, 23, 42, 0.88);
-        border: 1px solid rgba(34, 211, 238, 0.25);
-        border-radius: 12px;
-        padding: 18px;
-        min-height: 110px;
+        background: rgba(15, 23, 42, 0.90);
+        border: 1px solid #164E63;
+        border-radius: 10px;
+        padding: 10px 14px;
+        min-height: 75px;
     }}
 
     [data-testid="stMetricValue"] {{
         color: #67E8F9;
+        font-size: 26px;
         font-weight: 700;
     }}
 
@@ -162,55 +176,92 @@ st.markdown(
         color: #CBD5E1;
     }}
 
+    [data-testid="stMetricLabel"] p {{
+        font-size: 11px;
+    }}
+
+    /* BUTTONS */
+
     .stButton > button {{
         width: 100%;
-        min-height: 48px;
-        background: #101827;
+        min-height: 36px;
+        padding: 5px 12px;
+        background: rgba(15, 23, 42, 0.95);
         border: 1px solid #22D3EE;
         color: #67E8F9;
-        border-radius: 10px;
+        border-radius: 8px;
         font-weight: 600;
-        transition: 0.2s;
+        font-size: 13px;
     }}
 
     .stButton > button:hover {{
         background: #164E63;
         border-color: #67E8F9;
         color: white;
-        box-shadow: 0 0 15px #0891B255;
+        box-shadow: 0 0 12px #0891B255;
+    }}
+
+    .stButton > button[kind="primary"] {{
+        background: #155E75;
+        color: white;
     }}
 
     .stButton > button:disabled {{
-    opacity: 1;
-    background: rgba(34, 211, 238, 0.12);
-    border: 1px solid #22D3EE;
-    color: #67E8F9 !important;
-    font-weight: 600;
-    cursor: not-allowed;
-}}
-
-    [data-testid="stExpander"] {{
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #334155;
-        border-radius: 12px;
+        opacity: 0.45;
+        cursor: not-allowed;
     }}
+
+    /* FEEDBACK */
 
     .feedback-box {{
-        background: rgba(15, 23, 42, 0.90);
+        background: rgba(15, 23, 42, 0.92);
         border: 1px solid #334155;
         border-left: 4px solid #FBBF24;
-        border-radius: 10px;
-        padding: 18px;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 12px;
+        line-height: 1.5;
         color: #E2E8F0;
-        margin-bottom: 15px;
     }}
 
-    .footer {{
-        text-align: center;
-        color: #64748B;
-        font-size: 11px;
+    .feedback-title {{
+        color: #FBBF24;
+        font-size: 10px;
         letter-spacing: 2px;
-        padding: 25px 0;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }}
+
+    .mission {{
+        color: #94A3B8;
+        font-size: 12px;
+        line-height: 1.5;
+        padding: 4px 0;
+    }}
+
+    [data-testid="stCaptionContainer"] p {{
+        font-size: 11px;
+    }}
+
+    [data-testid="stProgress"] {{
+        margin: 0;
+    }}
+
+    [data-testid="stImage"] img {{
+        border-radius: 10px;
+    }}
+
+    /* SMALLER SCREENS */
+
+    @media (max-width: 900px) {{
+        .block-container {{
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }}
+
+        .hero-title {{
+            font-size: 28px;
+        }}
     }}
 
     </style>
@@ -219,167 +270,57 @@ st.markdown(
 )
 
 # ==================================================
-# HEADER
+# CONSTANTS
 # ==================================================
 
-st.markdown(
-    """
-    <div class="hero">
-        <div class="hero-label">
-            EVOLUTIONARY COMPUTATION
-        </div>
-        <div class="hero-title">
-            FITNESS MOUNTAIN
-        </div>
-        <div class="hero-subtitle">
-            THE PARAMETER CONTROL CHALLENGE
-        </div>
-    </div>
+MAX_GENERATIONS = 30
+POPULATION_SIZE = 5
 
-    <div class="mission">
-        <strong style="color:#67E8F9;">
-            YOUR MISSION
-        </strong><br>
-        Evolve your population and reach the highest
-        fitness peak. Explore how different parameter
-        control strategies influence the search
-        for an optimal solution.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+STRATEGIES = {
+
+    "Deterministic": {
+        "icon": "⏱️",
+        "color": "#22D3EE",
+        "description":
+            "Step size changes according to a "
+            "predefined generation schedule."
+    },
+
+    "Adaptive": {
+        "icon": "⚡",
+        "color": "#FBBF24",
+        "description":
+            "Step size changes based on mutation "
+            "success using the 1/5 Success Rule."
+    },
+
+    "Self-Adaptive": {
+        "icon": "🧬",
+        "color": "#D946EF",
+        "description":
+            "Each individual evolves its own "
+            "encoded mutation step size."
+    }
+
+}
 
 # ==================================================
 # FITNESS FUNCTION
 # ==================================================
 
 def fitness(x):
+
     return (
         25
         + 40 * np.exp(-((x - 27) / 13) ** 2)
         + 75 * np.exp(-((x - 79) / 15) ** 2)
     )
 
-
-MAX_GENERATIONS = 30
-POPULATION_SIZE = 5
-
-# ==================================================
-# STRATEGY SELECTION
-# ==================================================
-
-st.markdown(
-    '<div class="section-label">'
-    '01 / SELECT YOUR STRATEGY</div>',
-    unsafe_allow_html=True
-)
-
-strategies = {
-    "Deterministic": {
-        "icon": "⏱️",
-        "color": "#22D3EE",
-        "description": "Time-based control"
-    },
-    "Adaptive": {
-        "icon": "⚡",
-        "color": "#FBBF24",
-        "description": "Feedback-based control"
-    },
-    "Self-Adaptive": {
-        "icon": "🧬",
-        "color": "#D946EF",
-        "description": "Evolution-based control"
-    }
-}
-
-if "strategy" not in st.session_state:
-    st.session_state.strategy = "Deterministic"
-
-
-columns = st.columns(3)
-
-for column, (name, details) in zip(
-    columns, strategies.items()
-):
-
-    with column:
-
-        selected = st.session_state.strategy == name
-
-        border = (
-            details["color"]
-            if selected
-            else "#334155"
-        )
-
-        st.markdown(
-            f'<div class="strategy-card" style="border-color:{border};">'
-            f'<div class="strategy-icon">{details["icon"]}</div>'
-            f'<div class="strategy-title" style="color:{details["color"]};">'
-            f'{name}</div>'
-            f'<div class="strategy-description">'
-            f'{details["description"]}</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-        if st.button(
-            "✓ Selected" if selected else "Select",
-            key=f"select_{name}",
-            disabled=selected,
-            use_container_width=True
-        ):
-            st.session_state.strategy = name
-            st.rerun()
-            
-strategy = st.session_state.strategy
-accent = strategies[strategy]["color"]
-
-descriptions = {
-    "Deterministic":
-        "The mutation step size decreases according "
-        "to a predefined generation schedule.",
-
-    "Adaptive":
-        "The mutation step size changes based on "
-        "search feedback using the 1/5 Success Rule.",
-
-    "Self-Adaptive":
-        "Each individual carries its own mutation "
-        "step size, which evolves with its solution."
-}
-
-st.info(descriptions[strategy])
-
-# ==================================================
-# SIMULATION SETTINGS
-# ==================================================
-
-st.markdown(
-    '<div class="section-label">'
-    '02 / CONFIGURE YOUR PARAMETER</div>',
-    unsafe_allow_html=True
-)
-
-initial_sigma = st.slider(
-    "Initial Mutation Step Size (σ)",
-    min_value=1,
-    max_value=30,
-    value=15
-)
-
-st.caption(
-    "Large step size = broader exploration. "
-    "Small step size = local refinement."
-)
-
-settings = (strategy, initial_sigma)
-
 # ==================================================
 # RESET SIMULATION
 # ==================================================
 
-def reset_simulation():
+def reset_simulation(strategy, initial_sigma):
 
     st.session_state.generation = 0
 
@@ -400,24 +341,19 @@ def reset_simulation():
 
     st.session_state.feedback = (
         "Ready to begin. Press Next Generation "
-        "to evolve your population."
+        "to start evolving your population."
     )
 
-    st.session_state.settings = settings
-
-
-if (
-    "generation" not in st.session_state
-    or st.session_state.get("settings") != settings
-    or "sigma_history" not in st.session_state
-):
-    reset_simulation()
+    st.session_state.settings = (
+        strategy,
+        initial_sigma
+    )
 
 # ==================================================
 # EVOLUTION PROCESS
 # ==================================================
 
-def next_generation():
+def next_generation(strategy, initial_sigma):
 
     if st.session_state.generation >= MAX_GENERATIONS:
         return
@@ -427,6 +363,8 @@ def next_generation():
 
     offspring = []
     successes = 0
+
+    # Mutation
 
     for x, individual_sigma in population:
 
@@ -461,7 +399,8 @@ def next_generation():
     combined = population + offspring
 
     combined.sort(
-        key=lambda individual: fitness(individual[0]),
+        key=lambda individual:
+            fitness(individual[0]),
         reverse=True
     )
 
@@ -472,9 +411,12 @@ def next_generation():
     st.session_state.generation += 1
 
     generation = st.session_state.generation
+
     success_rate = successes / POPULATION_SIZE
 
-    # Deterministic Control
+    # ----------------------------------------------
+    # DETERMINISTIC CONTROL
+    # ----------------------------------------------
 
     if strategy == "Deterministic":
 
@@ -486,12 +428,14 @@ def next_generation():
 
         feedback = (
             f"Generation {generation}: "
-            f"Mutation step size changed from "
+            f"Step size changed from "
             f"{sigma:.2f} to {new_sigma:.2f} "
             "according to the predefined schedule."
         )
 
-    # Adaptive Control
+    # ----------------------------------------------
+    # ADAPTIVE CONTROL
+    # ----------------------------------------------
 
     elif strategy == "Adaptive":
 
@@ -514,25 +458,29 @@ def next_generation():
             f"Successful mutations: "
             f"{successes}/{POPULATION_SIZE} "
             f"({success_rate:.0%}). "
-            f"Mutation step size {action} "
-            f"from {sigma:.2f} to {new_sigma:.2f}."
+            f"Step size {action}: "
+            f"{sigma:.2f} → {new_sigma:.2f}."
         )
 
-    # Self-Adaptive Control
+    # ----------------------------------------------
+    # SELF-ADAPTIVE CONTROL
+    # ----------------------------------------------
 
     else:
 
-        new_sigma = st.session_state.population[0][1]
+        new_sigma = (
+            st.session_state.population[0][1]
+        )
 
         feedback = (
-            "Individuals mutated their own encoded "
-            "step sizes. Fitter individuals survived "
-            "together with their strategy parameters. "
+            "Individuals evolved their own "
+            "mutation step sizes. "
             f"Best individual's step size: "
             f"{new_sigma:.2f}."
         )
 
     st.session_state.sigma = float(new_sigma)
+
     st.session_state.feedback = feedback
 
     best_x = st.session_state.population[0][0]
@@ -546,315 +494,21 @@ def next_generation():
     )
 
 # ==================================================
-# GAME CONTROLS
+# POP-UP: PERFORMANCE ANALYSIS
 # ==================================================
 
-st.markdown(
-    '<div class="section-label">'
-    '03 / EVOLUTION CHALLENGE</div>',
-    unsafe_allow_html=True
-)
+@st.dialog("Performance Analysis", width="large")
+def performance_dialog():
 
-finished = (
-    st.session_state.generation >= MAX_GENERATIONS
-)
-
-b1, b2, b3 = st.columns(3)
-
-with b1:
-
-    if st.button(
-        "▶ Next Generation",
-        disabled=finished,
-        use_container_width=True
-    ):
-        next_generation()
-        st.rerun()
-
-with b2:
-
-    if st.button(
-        "⏩ Run All",
-        disabled=finished,
-        use_container_width=True
-    ):
-        while (
-            st.session_state.generation
-            < MAX_GENERATIONS
-        ):
-            next_generation()
-
-        st.rerun()
-
-with b3:
-
-    if st.button(
-        "↻ Reset Simulation",
-        use_container_width=True
-    ):
-        reset_simulation()
-        st.rerun()
-
-# ==================================================
-# GAME STATISTICS
-# ==================================================
-
-best_x = st.session_state.population[0][0]
-best_fitness = float(fitness(best_x))
-
-m1, m2, m3, m4 = st.columns(4)
-
-m1.metric(
-    "GENERATION",
-    f"{st.session_state.generation}/30"
-)
-
-m2.metric(
-    "BEST FITNESS",
-    f"{best_fitness:.2f}"
-)
-
-m3.metric(
-    "BEST INDIVIDUAL σ"
-    if strategy == "Self-Adaptive"
-    else "NEXT STEP SIZE (σ)",
-    f"{st.session_state.sigma:.2f}"
-)
-
-m4.metric(
-    "BEST POSITION",
-    f"{best_x:.2f}"
-)
-
-st.progress(
-    st.session_state.generation / MAX_GENERATIONS
-)
-
-# ==================================================
-# FITNESS LANDSCAPE
-# ==================================================
-
-st.markdown(
-    '<div class="section-label">'
-    '04 / FITNESS LANDSCAPE</div>',
-    unsafe_allow_html=True
-)
-
-x_values = np.linspace(0, 100, 500)
-y_values = fitness(x_values)
-
-fig, ax = plt.subplots(figsize=(11, 4.2))
-
-fig.patch.set_facecolor("#080F20")
-ax.set_facecolor("#080F20")
-
-# Mountain fill
-
-ax.fill_between(
-    x_values,
-    y_values,
-    color="#22D3EE",
-    alpha=0.12
-)
-
-# Neon glow effect
-
-for width, alpha in [
-    (12, 0.025),
-    (8, 0.04),
-    (5, 0.08)
-]:
-
-    ax.plot(
-        x_values,
-        y_values,
-        color="#22D3EE",
-        linewidth=width,
-        alpha=alpha
-    )
-
-ax.plot(
-    x_values,
-    y_values,
-    color="#22D3EE",
-    linewidth=2
-)
-
-# Population
-
-for x, individual_sigma in st.session_state.population:
-
-    ax.scatter(
-        x,
-        fitness(x),
-        color="#38BDF8",
-        s=45,
-        alpha=0.85,
-        zorder=5
-    )
-
-# Best individual glow
-
-for size, alpha in [
-    (650, 0.04),
-    (350, 0.08),
-    (180, 0.15)
-]:
-
-    ax.scatter(
-        best_x,
-        best_fitness,
-        color=accent,
-        s=size,
-        alpha=alpha,
-        zorder=6
-    )
-
-ax.scatter(
-    best_x,
-    best_fitness,
-    color=accent,
-    edgecolors="white",
-    linewidths=1.2,
-    s=95,
-    zorder=7,
-    label="Best Individual"
-)
-
-# Local optimum
-
-ax.annotate(
-    "LOCAL OPTIMUM",
-    xy=(27, fitness(27)),
-    xytext=(27, 82),
-    color="#CBD5E1",
-    fontsize=9,
-    ha="center",
-    arrowprops=dict(
-        color="#94A3B8",
-        arrowstyle="->"
-    )
-)
-
-# Global optimum
-
-ax.scatter(
-    79,
-    fitness(79),
-    marker="*",
-    color="#FBBF24",
-    s=180,
-    zorder=4
-)
-
-ax.annotate(
-    "GLOBAL OPTIMUM",
-    xy=(79, fitness(79)),
-    xytext=(79, 116),
-    color="#FBBF24",
-    fontsize=9,
-    fontweight="bold",
-    ha="center",
-    arrowprops=dict(
-        color="#FBBF24",
-        arrowstyle="->"
-    )
-)
-
-ax.set_xlim(0, 100)
-ax.set_ylim(0, 125)
-
-ax.set_xlabel(
-    "Search Space — Candidate Solution (x)",
-    color="#94A3B8",
-    labelpad=10
-)
-
-ax.set_ylabel(
-    "Fitness Value",
-    color="#94A3B8"
-)
-
-ax.tick_params(
-    colors="#94A3B8",
-    labelsize=9
-)
-
-ax.grid(
-    color="#334155",
-    linestyle="--",
-    linewidth=0.5,
-    alpha=0.5
-)
-
-for spine in ax.spines.values():
-    spine.set_color("#1E3A4C")
-
-fig.tight_layout()
-
-st.pyplot(fig)
-plt.close(fig)
-
-st.caption(
-    "Blue dots: population members  |  "
-    "Highlighted dot: best individual  |  "
-    "Gold star: global optimum"
-)
-
-
-# ==================================================
-# LIVE FEEDBACK
-# ==================================================
-
-st.markdown(
-    '<div class="feedback-box">'
-    '<div style="color:#FBBF24;'
-    'letter-spacing:2px;'
-    'font-size:12px;'
-    'font-weight:700;'
-    'margin-bottom:12px;">'
-    'LIVE EVOLUTION FEEDBACK'
-    '</div>'
-    '<div style="color:#E2E8F0;'
-    'font-size:15px;'
-    'line-height:1.6;">'
-    f'{st.session_state.feedback}'
-    '</div>'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-# ==================================================
-# CHALLENGE RESULT
-# ==================================================
-
-if best_fitness >= 99.9:
-
-    st.success(
-        "🏆 MISSION ACCOMPLISHED! "
-        "Your population has reached a "
-        "near-global optimum."
-    )
-
-elif st.session_state.generation >= MAX_GENERATIONS:
-
-    st.warning(
-        "Simulation completed. Try another "
-        "strategy or initial step size and "
-        "compare the results."
-    )
-
-# ==================================================
-# PERFORMANCE ANALYSIS
-# ==================================================
-
-with st.expander("📊 View Performance Analysis"):
-
-    st.subheader("Fitness Progress")
+    st.subheader("Best Fitness Progress")
 
     st.line_chart(
-        {"Best Fitness": st.session_state.history},
-        color="#22D3EE"
+        {
+            "Best Fitness":
+            st.session_state.history
+        },
+        color="#22D3EE",
+        height=220
     )
 
     st.subheader("Mutation Step Size Progress")
@@ -864,109 +518,614 @@ with st.expander("📊 View Performance Analysis"):
             "Step Size":
             st.session_state.sigma_history
         },
-        color="#D946EF"
+        color="#D946EF",
+        height=220
     )
 
     st.caption(
-        "For Self-Adaptive Control, the step size "
-        "graph shows the best individual's parameter."
+        "For Self-Adaptive Control, the graph "
+        "shows the best individual's step size."
     )
 
 # ==================================================
-# POPULATION DETAILS
+# POP-UP: POPULATION DETAILS
 # ==================================================
 
-with st.expander("🧬 View Population Details"):
+@st.dialog("Population Details", width="large")
+def population_dialog():
+
+    current_strategy = (
+        st.session_state.settings[0]
+    )
 
     st.table([
         {
             "Individual": i + 1,
+
             "Position": round(x, 2),
-            "Fitness": round(float(fitness(x)), 2),
+
+            "Fitness": round(
+                float(fitness(x)), 2
+            ),
+
             "Step Size": round(
                 individual_sigma
-                if strategy == "Self-Adaptive"
+                if current_strategy == "Self-Adaptive"
                 else st.session_state.sigma,
                 2
             )
         }
+
         for i, (x, individual_sigma)
         in enumerate(st.session_state.population)
     ])
 
-# ==================================================
-# LEARNING MATERIAL
-# ==================================================
-
-with st.expander("📖 Learning Guide"):
-
-    st.markdown("""
-    ### Deterministic Control
-
-    Parameters change according to a predefined
-    schedule without feedback from the search.
-
-    ### Adaptive Control
-
-    Parameters change based on search feedback.
-
-    **1/5 Success Rule:**
-
-    | Success Rate | Action |
-    |---|---|
-    | Above 20% | Increase step size |
-    | Equal to 20% | Maintain step size |
-    | Below 20% | Decrease step size |
-
-    ### Self-Adaptive Control
-
-    Each individual carries its own mutation
-    step size in its chromosome.
-
-    The parameter evolves together with the
-    candidate solution through mutation and
-    survival selection.
-
-    ### Exploration vs Exploitation
-
-    - Large mutation step size encourages
-      broader exploration.
-    - Small mutation step size encourages
-      local refinement.
-
-    ### Local vs Global Optimum
-
-    - Local optimum: A solution better than
-      nearby solutions.
-    - Global optimum: The best solution
-      within the entire search space.
-
-    ### Try This Challenge
-
-    1. Select Deterministic Control.
-    2. Set the initial step size to 5.
-    3. Press Run All and observe the result.
-    4. Repeat using Adaptive Control.
-    5. Repeat using Self-Adaptive Control.
-    6. Compare fitness and step size progress.
-
-    Results may differ between runs because
-    mutation involves randomness.
-    """)
+    st.caption(
+        "The population contains the five "
+        "fittest surviving individuals."
+    )
 
 # ==================================================
-# FOOTER
+# POP-UP: LEARNING GUIDE
+# ==================================================
+
+@st.dialog("Learning Guide", width="large")
+def learning_dialog():
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Deterministic",
+        "Adaptive",
+        "Self-Adaptive",
+        "Challenge"
+    ])
+
+    with tab1:
+
+        st.markdown("""
+        ### Deterministic Control
+
+        Parameters change according to a
+        predefined schedule.
+
+        - No feedback from the search.
+        - Large step sizes encourage exploration.
+        - Smaller step sizes encourage refinement.
+        """)
+
+        st.latex(
+            r"\sigma_t = "
+            r"\max(0.5,\sigma_0(1-t/T))"
+        )
+
+    with tab2:
+
+        st.markdown("""
+        ### Adaptive Control
+
+        Parameters change based on feedback
+        from the search process.
+
+        **1/5 Success Rule**
+        """)
+
+        st.table([
+            {
+                "Success Rate": "Above 20%",
+                "Action": "Increase step size"
+            },
+            {
+                "Success Rate": "Equal to 20%",
+                "Action": "Maintain step size"
+            },
+            {
+                "Success Rate": "Below 20%",
+                "Action": "Decrease step size"
+            }
+        ])
+
+    with tab3:
+
+        st.markdown("""
+        ### Self-Adaptive Control
+
+        Each individual carries its own
+        mutation step size.
+
+        The parameter evolves together with
+        the candidate solution through mutation
+        and survival selection.
+        """)
+
+        st.latex(
+            r"\sigma' = \sigma e^{0.4N(0,1)}"
+        )
+
+    with tab4:
+
+        st.markdown("""
+        ### Your Mission
+
+        Reach a fitness value of at least 99.9
+        within 30 generations.
+
+        1. Select a parameter control strategy.
+        2. Choose an initial mutation step size.
+        3. Run the simulation.
+        4. Observe the fitness and step size.
+        5. Repeat using another strategy.
+
+        **Discussion**
+
+        - Which strategy reached the highest peak?
+        - How did the mutation step size change?
+        - Did the population get trapped at
+          a local optimum?
+
+        Results may differ because mutation
+        involves randomness.
+        """)
+
+# ==================================================
+# HEADER
 # ==================================================
 
 st.markdown(
-    """
-    <div class="footer">
-        FITNESS MOUNTAIN
-        &nbsp; | &nbsp;
-        INTERACTIVE LEARNING SIMULATION
-        <br><br>
-        PARAMETER CONTROL IN EVOLUTIONARY ALGORITHMS
-    </div>
-    """,
+    '<div class="hero">'
+    '<div class="hero-label">'
+    'EVOLUTIONARY COMPUTATION'
+    '</div>'
+    '<div class="hero-title">'
+    'FITNESS MOUNTAIN'
+    '</div>'
+    '<div class="hero-subtitle">'
+    'THE PARAMETER CONTROL CHALLENGE'
+    '</div>'
+    '</div>',
     unsafe_allow_html=True
 )
+
+# ==================================================
+# SINGLE SCREEN LAYOUT
+# ==================================================
+
+left, right = st.columns(
+    [1, 3],
+    gap="medium"
+)
+
+# ==================================================
+# LEFT PANEL — GAME CONTROLS
+# ==================================================
+
+with left:
+
+    st.markdown(
+        '<div class="section-label">'
+        '01 / CONTROL PANEL'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    strategy = st.radio(
+        "Parameter Control Strategy",
+
+        options=list(STRATEGIES.keys()),
+
+        format_func=lambda name:
+            f'{STRATEGIES[name]["icon"]} {name}',
+
+        key="selected_strategy"
+    )
+
+    accent = STRATEGIES[strategy]["color"]
+
+    description = STRATEGIES[strategy]["description"]
+
+    st.markdown(
+        f'<div class="strategy-info" '
+        f'style="border-left:3px solid {accent};">'
+        f'<strong style="color:{accent};">'
+        f'{strategy} Control'
+        f'</strong><br>'
+        f'{description}'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    initial_sigma = st.slider(
+        "Initial Mutation Step Size (σ)",
+        min_value=1,
+        max_value=30,
+        value=15
+    )
+
+    st.caption(
+        "Large σ: exploration | Small σ: refinement"
+    )
+
+    # Initialize or reset when settings change
+
+    settings = (strategy, initial_sigma)
+
+    if (
+        "generation" not in st.session_state
+        or st.session_state.get("settings") != settings
+        or "sigma_history" not in st.session_state
+    ):
+
+        reset_simulation(
+            strategy,
+            initial_sigma
+        )
+
+    finished = (
+        st.session_state.generation
+        >= MAX_GENERATIONS
+    )
+
+    st.markdown(
+        '<div class="section-label">'
+        '02 / GAME CONTROLS'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    if st.button(
+        "▶ Next Generation",
+        type="primary",
+        disabled=finished,
+        use_container_width=True
+    ):
+
+        next_generation(
+            strategy,
+            initial_sigma
+        )
+
+        st.rerun()
+
+    run_col, reset_col = st.columns(2)
+
+    with run_col:
+
+        if st.button(
+            "⏩ Run All",
+            disabled=finished,
+            use_container_width=True
+        ):
+
+            while (
+                st.session_state.generation
+                < MAX_GENERATIONS
+            ):
+
+                next_generation(
+                    strategy,
+                    initial_sigma
+                )
+
+            st.rerun()
+
+    with reset_col:
+
+        if st.button(
+            "↻ Reset",
+            use_container_width=True
+        ):
+
+            reset_simulation(
+                strategy,
+                initial_sigma
+            )
+
+            st.rerun()
+
+    st.markdown(
+        '<div class="section-label">'
+        '03 / YOUR MISSION'
+        '</div>'
+        '<div class="mission">'
+        'Reach the highest fitness peak within '
+        '30 generations. Compare how different '
+        'strategies control mutation step size.'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+# ==================================================
+# RIGHT PANEL — GAME DISPLAY
+# ==================================================
+
+with right:
+
+    best_x = st.session_state.population[0][0]
+
+    best_fitness = float(fitness(best_x))
+
+    generation = st.session_state.generation
+
+    # ----------------------------------------------
+    # STATISTICS
+    # ----------------------------------------------
+
+    m1, m2, m3, m4 = st.columns(4)
+
+    m1.metric(
+        "GENERATION",
+        f"{generation}/30"
+    )
+
+    m2.metric(
+        "BEST FITNESS",
+        f"{best_fitness:.2f}"
+    )
+
+    m3.metric(
+        "BEST σ"
+        if strategy == "Self-Adaptive"
+        else "NEXT STEP SIZE (σ)",
+        f"{st.session_state.sigma:.2f}"
+    )
+
+    m4.metric(
+        "BEST POSITION",
+        f"{best_x:.2f}"
+    )
+
+    st.progress(
+        generation / MAX_GENERATIONS
+    )
+
+    # ----------------------------------------------
+    # FITNESS LANDSCAPE
+    # ----------------------------------------------
+
+    st.markdown(
+        '<div class="section-label">'
+        '04 / FITNESS LANDSCAPE'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    x_values = np.linspace(0, 100, 500)
+
+    y_values = fitness(x_values)
+
+    fig, ax = plt.subplots(
+        figsize=(12, 3.2),
+        dpi=100
+    )
+
+    fig.patch.set_facecolor("#080F20")
+
+    ax.set_facecolor("#080F20")
+
+    # Mountain area
+
+    ax.fill_between(
+        x_values,
+        y_values,
+        color="#22D3EE",
+        alpha=0.12
+    )
+
+    # Neon glow
+
+    for width, alpha in [
+        (12, 0.025),
+        (8, 0.04),
+        (5, 0.08)
+    ]:
+
+        ax.plot(
+            x_values,
+            y_values,
+            color="#22D3EE",
+            linewidth=width,
+            alpha=alpha
+        )
+
+    ax.plot(
+        x_values,
+        y_values,
+        color="#22D3EE",
+        linewidth=2
+    )
+
+    # Population members
+
+    for x, individual_sigma in (
+        st.session_state.population
+    ):
+
+        ax.scatter(
+            x,
+            fitness(x),
+            color="#38BDF8",
+            s=35,
+            alpha=0.8,
+            zorder=5
+        )
+
+    # Best individual glow
+
+    for size, alpha in [
+        (450, 0.05),
+        (250, 0.10),
+        (120, 0.18)
+    ]:
+
+        ax.scatter(
+            best_x,
+            best_fitness,
+            color=accent,
+            s=size,
+            alpha=alpha,
+            zorder=6
+        )
+
+    ax.scatter(
+        best_x,
+        best_fitness,
+        color=accent,
+        edgecolors="white",
+        linewidths=1.2,
+        s=75,
+        zorder=7
+    )
+
+    # Local optimum
+
+    ax.annotate(
+        "LOCAL OPTIMUM",
+        xy=(27, fitness(27)),
+        xytext=(27, 86),
+        color="#CBD5E1",
+        fontsize=9,
+        ha="center",
+        arrowprops=dict(
+            color="#94A3B8",
+            arrowstyle="->"
+        )
+    )
+
+    # Global optimum
+
+    ax.scatter(
+        79,
+        fitness(79),
+        marker="*",
+        color="#FBBF24",
+        s=150,
+        zorder=4
+    )
+
+    ax.annotate(
+        "GLOBAL OPTIMUM",
+        xy=(79, fitness(79)),
+        xytext=(79, 118),
+        color="#FBBF24",
+        fontsize=9,
+        fontweight="bold",
+        ha="center",
+        arrowprops=dict(
+            color="#FBBF24",
+            arrowstyle="->"
+        )
+    )
+
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 128)
+
+    ax.set_xlabel(
+        "Search Space — Candidate Solution (x)",
+        color="#94A3B8",
+        fontsize=9
+    )
+
+    ax.set_ylabel(
+        "Fitness",
+        color="#94A3B8",
+        fontsize=9
+    )
+
+    ax.tick_params(
+        colors="#94A3B8",
+        labelsize=8
+    )
+
+    ax.grid(
+        color="#334155",
+        linestyle="--",
+        linewidth=0.5,
+        alpha=0.5
+    )
+
+    for spine in ax.spines.values():
+
+        spine.set_color("#1E3A4C")
+
+    fig.tight_layout(pad=1.2)
+
+    st.pyplot(
+        fig,
+        use_container_width=True
+    )
+
+    plt.close(fig)
+
+    st.caption(
+        "● Population members  |  "
+        "◉ Best individual  |  "
+        "★ Global optimum"
+    )
+
+    # ----------------------------------------------
+    # LIVE EVOLUTION FEEDBACK
+    # ----------------------------------------------
+
+    feedback = st.session_state.feedback
+
+    if best_fitness >= 99.9:
+
+        feedback = (
+            "🏆 Mission accomplished! "
+            "Near-global optimum reached. "
+            + feedback
+        )
+
+    elif generation >= MAX_GENERATIONS:
+
+        feedback = (
+            "Simulation completed. "
+            "Try another strategy or step size. "
+            + feedback
+        )
+
+    st.markdown(
+        '<div class="feedback-box">'
+        '<div class="feedback-title">'
+        'LIVE EVOLUTION FEEDBACK'
+        '</div>'
+        f'{escape(feedback)}'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+# ==================================================
+# BOTTOM NAVIGATION — POP-UP BUTTONS
+# ==================================================
+
+st.markdown(
+    '<div style="height:5px;"></div>',
+    unsafe_allow_html=True
+)
+
+p1, p2, p3 = st.columns(3)
+
+with p1:
+
+    if st.button(
+        "📊 Performance Analysis",
+        use_container_width=True
+    ):
+
+        performance_dialog()
+
+with p2:
+
+    if st.button(
+        "🧬 Population Details",
+        use_container_width=True
+    ):
+
+        population_dialog()
+
+with p3:
+
+    if st.button(
+        "📖 Learning Guide",
+        use_container_width=True
+    ):
+
+        learning_dialog()
