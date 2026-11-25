@@ -1,4 +1,4 @@
-
+import streamlit.components.v1 as components
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -3424,8 +3424,9 @@ def create_mountain_svg(
     return svg
 
 
+
 # ============================================================
-# 20. DISPLAY MOUNTAIN ARENA
+# 20. DISPLAY MOUNTAIN ARENA — FIXED
 # ============================================================
 
 def display_arena(
@@ -3433,70 +3434,177 @@ def display_arena(
     preview=False
 ):
 
-    css_class = "arena"
-
-    if welcome:
-
-        css_class += " welcome-arena"
-
-    elif S.game_mode == "Practice":
-
-        css_class += " practice-arena"
-
     svg = create_mountain_svg(
-
         welcome=welcome,
-
         preview=preview
     )
+
+    if welcome:
+        arena_height = 220
+
+    elif S.game_mode == "Practice":
+        arena_height = 280
+
+    else:
+        arena_height = 360
 
     header = ""
 
     if not welcome:
 
         status = (
-
             "MISSION ENDED"
-
             if S.finished
-
             else "LIVE EXPEDITION"
         )
 
         header = f"""
-
         <div class="arena-top">
-
             <span>
-
                 <span class="live-dot"></span>
-
                 {status}
-
             </span>
 
-            <span>
+            <span>TARGET: 79</span>
+        </div>
+        """
 
-                TARGET: 79
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
 
-            </span>
+    <style>
+
+        * {{
+            box-sizing: border-box;
+        }}
+
+        html, body {{
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            font-family: Arial, sans-serif;
+        }}
+
+        .arena {{
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+            flex-direction: column;
+
+            background: linear-gradient(
+                180deg,
+                #071322,
+                #080D1C
+            );
+
+            border: 1px solid #164E63;
+            border-radius: 14px;
+
+            overflow: hidden;
+        }}
+
+        .arena-top {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            flex-shrink: 0;
+
+            padding: 10px 14px;
+
+            color: #67E8F9;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+
+            border-bottom: 1px solid #164E63;
+        }}
+
+        .mountain-wrapper {{
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            overflow: hidden;
+        }}
+
+        svg {{
+            display: block;
+            width: 100%;
+            height: 100%;
+        }}
+
+        .live-dot {{
+            display: inline-block;
+
+            width: 8px;
+            height: 8px;
+
+            margin-right: 5px;
+
+            background: #4ADE80;
+            border-radius: 50%;
+
+            box-shadow: 0 0 10px #4ADE80;
+
+            animation: pulse 1.5s infinite;
+        }}
+
+        .climber-glow {{
+            animation: pulse 2s infinite;
+        }}
+
+        .jump-trail {{
+            stroke-dasharray: 8 7;
+            animation: trail 1.2s linear infinite;
+        }}
+
+        @keyframes pulse {{
+            0%, 100% {{
+                opacity: 1;
+            }}
+
+            50% {{
+                opacity: 0.35;
+            }}
+        }}
+
+        @keyframes trail {{
+            to {{
+                stroke-dashoffset: -30;
+            }}
+        }}
+
+    </style>
+
+    </head>
+
+    <body>
+
+        <div class="arena">
+
+            {header}
+
+            <div class="mountain-wrapper">
+                {svg}
+            </div>
 
         </div>
 
-        """
+    </body>
+    </html>
+    """
 
-    st.html(f"""
-
-    <div class="{css_class}">
-
-        {header}
-
-        {svg}
-
-    </div>
-
-    """)
-
+    components.html(
+        html_content,
+        height=arena_height,
+        scrolling=False
+    )
 
 # ============================================================
 # 21. MAIN MENU
