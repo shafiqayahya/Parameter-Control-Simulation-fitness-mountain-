@@ -1249,6 +1249,430 @@ body,
     }
 }
 
+/* =========================================================
+   FULL SCREEN RESPONSIVE DASHBOARD
+   ========================================================= */
+
+@media (min-width: 1100px) and (min-height: 680px) {
+
+    :root {
+        --ui-scale: clamp(0.9px, 0.14dvh, 1.4px);
+    }
+
+    html,
+    body,
+    #root,
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+
+    /* MAIN SCREEN */
+
+    .block-container {
+        width: 100% !important;
+        max-width: none !important;
+
+        height: 100dvh !important;
+
+        padding: 12px 24px 16px !important;
+
+        box-sizing: border-box;
+        overflow: hidden !important;
+    }
+
+    .block-container >
+    [data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+
+        height: 100% !important;
+        min-height: 0 !important;
+
+        gap: 10px !important;
+    }
+
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
+
+    .hero {
+        padding: 2px 0 10px;
+    }
+
+    .hero-label {
+        font-size: calc(10 * var(--ui-scale));
+        letter-spacing: 5px;
+        margin-bottom: 5px;
+    }
+
+    .hero-title {
+        font-size: calc(36 * var(--ui-scale));
+        letter-spacing: 6px;
+        line-height: 1.1;
+        margin-bottom: 5px;
+    }
+
+    .hero-subtitle {
+        font-size: calc(10 * var(--ui-scale));
+        letter-spacing: 4px;
+    }
+
+
+    /* =====================================================
+       MAIN DASHBOARD
+       ===================================================== */
+
+    .st-key-main_dashboard {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        width: 100% !important;
+    }
+
+    .st-key-main_dashboard
+    [data-testid="stHorizontalBlock"] {
+        gap: 18px !important;
+    }
+
+    .st-key-left_panel
+    [data-testid="stVerticalBlock"],
+
+    .st-key-right_panel
+    [data-testid="stVerticalBlock"] {
+        gap: 8px !important;
+    }
+
+    .section-heading {
+        font-size: calc(11 * var(--ui-scale));
+        letter-spacing: 1.6px;
+        line-height: 1.3;
+    }
+
+
+    /* =====================================================
+       PARAMETER CONTROL
+       ===================================================== */
+
+    .st-key-left_panel [role="radiogroup"] {
+        width: 100% !important;
+        padding: 9px 12px !important;
+        gap: 3px !important;
+    }
+
+    .st-key-left_panel
+    [role="radiogroup"] label {
+        min-height: calc(25 * var(--ui-scale));
+    }
+
+    .st-key-left_panel
+    [role="radiogroup"] p {
+        font-size: calc(13 * var(--ui-scale));
+        line-height: 1.3;
+    }
+
+    .strategy-description {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .strategy-description-title {
+        font-size: calc(12 * var(--ui-scale));
+        margin-bottom: 5px;
+    }
+
+    .strategy-description-text {
+        font-size: calc(12 * var(--ui-scale));
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       INITIAL STEP SIZE
+       ===================================================== */
+
+    [data-testid="stWidgetLabel"] p {
+        font-size: calc(13 * var(--ui-scale));
+    }
+
+    .st-key-left_panel
+    [data-testid="stSlider"] {
+        padding: 2px 0 !important;
+    }
+
+    .slider-help {
+        font-size: calc(11 * var(--ui-scale));
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       SIMULATION BUTTONS
+       ===================================================== */
+
+    .stButton > button {
+        min-height: calc(35 * var(--ui-scale)) !important;
+
+        padding: 6px 12px !important;
+
+        border-radius: 9px;
+    }
+
+    .stButton > button p {
+        font-size: calc(12 * var(--ui-scale));
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+
+    /* =====================================================
+       MISSION OBJECTIVE
+       ===================================================== */
+
+    .mission-card {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .mission-title {
+        font-size: calc(10 * var(--ui-scale));
+        margin-bottom: 6px;
+    }
+
+    .mission-text {
+        font-size: calc(11 * var(--ui-scale));
+        line-height: 1.5;
+    }
+
+
+    /* =====================================================
+       METRIC CARDS
+       ===================================================== */
+
+    .metric-grid {
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+    .metric-card {
+        min-height: calc(68 * var(--ui-scale));
+
+        padding: 10px 14px;
+
+        border-radius: 12px;
+    }
+
+    .metric-label {
+        font-size: calc(10 * var(--ui-scale));
+        margin-bottom: 6px;
+    }
+
+    .metric-value {
+        font-size: calc(28 * var(--ui-scale));
+        line-height: 1.1;
+    }
+
+    .progress-track {
+        height: 5px;
+        margin-top: 6px;
+    }
+
+
+    /* =====================================================
+       FITNESS LANDSCAPE
+       ===================================================== */
+
+    .fitness-image {
+        display: block;
+
+        width: 100% !important;
+
+        height: clamp(220px, 40dvh, 480px) !important;
+
+        max-height: none !important;
+
+        object-fit: fill !important;
+
+        border-radius: 12px;
+
+        box-sizing: border-box;
+    }
+
+
+    /* =====================================================
+       TARGET STATUS
+       ===================================================== */
+
+    .target-status {
+        min-height: 35px;
+
+        padding: 8px 12px;
+
+        border-radius: 9px;
+
+        font-size: calc(11 * var(--ui-scale));
+    }
+
+
+    /* =====================================================
+       LIVE EVOLUTION FEEDBACK
+       ===================================================== */
+
+    .feedback-box {
+        padding: 10px 14px;
+
+        min-height: 60px;
+
+        border-radius: 10px;
+    }
+
+    .feedback-title {
+        font-size: calc(11 * var(--ui-scale));
+        margin-bottom: 6px;
+    }
+
+    .feedback-text {
+        font-size: calc(12 * var(--ui-scale));
+        line-height: 1.4;
+    }
+
+
+    /* =====================================================
+       BOTTOM NAVIGATION
+       ===================================================== */
+
+    .st-key-bottom_navigation {
+        width: 100% !important;
+
+        flex: 0 0 auto !important;
+
+        margin-top: auto !important;
+
+        padding-top: 10px !important;
+        padding-bottom: 4px !important;
+    }
+
+    .st-key-bottom_navigation
+    [data-testid="stHorizontalBlock"] {
+        gap: 12px !important;
+    }
+
+    .st-key-bottom_navigation
+    .stButton > button {
+        min-height: calc(38 * var(--ui-scale)) !important;
+    }
+
+
+    /* =====================================================
+       WELCOME SCREEN
+       ===================================================== */
+
+    .st-key-welcome_screen {
+        max-width: 850px;
+
+        padding: 22px 30px !important;
+    }
+
+    .welcome-title {
+        font-size: calc(40 * var(--ui-scale));
+    }
+
+    .welcome-subtitle {
+        font-size: calc(11 * var(--ui-scale));
+    }
+
+    .welcome-mountain {
+        height: 17dvh;
+        max-height: 160px;
+        max-width: 550px;
+    }
+
+    .welcome-mission {
+        font-size: calc(19 * var(--ui-scale));
+    }
+
+    .welcome-mission-text {
+        font-size: calc(13 * var(--ui-scale));
+    }
+
+    .instruction-row {
+        padding: 10px 14px;
+    }
+
+    .instruction-title {
+        font-size: calc(13 * var(--ui-scale));
+    }
+
+    .instruction-text {
+        font-size: calc(12 * var(--ui-scale));
+    }
+
+}
+
+
+/* =========================================================
+   SHORT LAPTOP SCREEN
+   ========================================================= */
+
+@media (min-width: 1100px) and (max-height: 780px) {
+
+    .block-container {
+        padding: 8px 22px 10px !important;
+    }
+
+    .hero {
+        padding-bottom: 5px;
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .st-key-left_panel
+    [data-testid="stVerticalBlock"],
+
+    .st-key-right_panel
+    [data-testid="stVerticalBlock"] {
+        gap: 5px !important;
+    }
+
+    .fitness-image {
+        height: 37dvh !important;
+    }
+
+    .metric-card {
+        min-height: 58px;
+        padding: 8px 12px;
+    }
+
+    .metric-value {
+        font-size: 25px;
+    }
+
+    .strategy-description,
+    .mission-card,
+    .feedback-box {
+        padding: 7px 10px;
+    }
+
+    .stButton > button {
+        min-height: 32px !important;
+    }
+
+    .feedback-box {
+        min-height: 0;
+    }
+
+    .st-key-bottom_navigation {
+        padding-top: 6px !important;
+    }
+}
+
 </style>
 """
 
