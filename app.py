@@ -47,6 +47,54 @@ def load_background():
 
 background = load_background()
 
+/* ==========================================================
+   WELCOME SCREEN COMPACT FIX
+   ========================================================== */
+
+.st-key-welcome_screen {
+    max-width: 720px;
+    padding: 18px 26px !important;
+    margin: 0 auto !important;
+}
+
+.welcome-mountain {
+    width: 100%;
+    max-width: 350px;
+    max-height: 105px;
+    margin: 0 auto 8px;
+}
+
+.welcome-title {
+    font-size: 36px;
+}
+
+.welcome-subtitle {
+    margin: 6px 0 10px;
+}
+
+.welcome-mission-text {
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.instruction-row {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+}
+
+.instruction-number {
+    width: 35px;
+    height: 35px;
+    font-size: 15px;
+}
+
+.instructions-heading {
+    margin-bottom: 8px;
+}
+
+.st-key-start_game_button button {
+    min-height: 42px !important;
+}
 
 # ============================================================
 # 03. GLOBAL CSS
@@ -2316,229 +2364,176 @@ def result_metric_html(label, value, color="#E2E8F0"):
 
 def display_welcome_screen():
 
-    with st.container(
+    with st.container(key="welcome_screen"):
 
-        key="welcome_screen"
+        st.html("""
+        <div class="welcome-label">
+            EVOLUTIONARY COMPUTATION
+        </div>
 
-    ):
+        <div class="welcome-title">
+            FITNESS MOUNTAIN
+        </div>
 
-        st.markdown(
+        <div class="welcome-subtitle">
+            THE PARAMETER CONTROL CHALLENGE
+        </div>
 
-            """
-            <div class="welcome-label">
-                EVOLUTIONARY COMPUTATION
+        <svg
+            class="welcome-mountain"
+            viewBox="0 0 430 115"
+            xmlns="http://www.w3.org/2000/svg">
+
+            <path
+                d="M0 108 L95 42 L150 83 L275 10 L430 108 Z"
+                fill="#22D3EE"
+                fill-opacity="0.10"
+            />
+
+            <path
+                d="M0 108 L95 42 L150 83 L275 10 L430 108"
+                fill="none"
+                stroke="#22D3EE"
+                stroke-width="2"
+            />
+
+            <path
+                d="M95 42 L110 108
+                   M150 83 L175 108
+                   M275 10 L230 108
+                   M275 10 L320 108
+                   M0 108 H430"
+                stroke="#22D3EE"
+                stroke-opacity="0.25"
+                fill="none"
+            />
+
+            <circle
+                cx="275"
+                cy="10"
+                r="10"
+                fill="#FBBF24"
+                opacity="0.20"
+            />
+
+            <circle
+                cx="275"
+                cy="10"
+                r="4"
+                fill="#FBBF24"
+            />
+
+            <text
+                x="275"
+                y="43"
+                fill="#FBBF24"
+                font-size="11"
+                text-anchor="middle"
+                font-weight="bold">
+                GLOBAL OPTIMUM
+            </text>
+
+            <text
+                x="95"
+                y="27"
+                fill="#94A3B8"
+                font-size="9"
+                text-anchor="middle">
+                LOCAL OPTIMUM
+            </text>
+
+        </svg>
+
+        <div class="welcome-mission">
+            YOUR MISSION
+        </div>
+
+        <div class="welcome-mission-text">
+            Reach the exact Global Optimum at
+            <strong style="color:#FBBF24;">
+                position 79
+            </strong>
+            within 30 generations.
+            <br>
+            Falling short or overshooting the target
+            after 30 generations means mission failed.
+        </div>
+
+        <div class="instructions-heading">
+            HOW TO PLAY
+        </div>
+
+        <div class="instruction-row">
+
+            <div class="instruction-number">
+                01
             </div>
 
-            <div class="welcome-title">
-                FITNESS MOUNTAIN
-            </div>
+            <div class="instruction-content">
 
-            <div class="welcome-subtitle">
-                THE PARAMETER CONTROL CHALLENGE
-            </div>
-
-            <svg
-                class="welcome-mountain"
-                viewBox="0 0 430 115"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-
-                <defs>
-
-                    <linearGradient
-                        id="mountainGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                    >
-
-                        <stop
-                            offset="0%"
-                            stop-color="#22D3EE"
-                            stop-opacity="0.22"
-                        />
-
-                        <stop
-                            offset="100%"
-                            stop-color="#22D3EE"
-                            stop-opacity="0.01"
-                        />
-
-                    </linearGradient>
-
-                </defs>
-
-                <path
-                    d="M0 108 L95 42 L150 83
-                       L275 10 L430 108 Z"
-                    fill="url(#mountainGradient)"
-                />
-
-                <path
-                    d="M0 108 L95 42 L150 83
-                       L275 10 L430 108"
-                    fill="none"
-                    stroke="#22D3EE"
-                    stroke-width="2"
-                />
-
-                <path
-                    d="M95 42 L110 108
-                       M150 83 L175 108
-                       M275 10 L230 108
-                       M275 10 L320 108
-                       M0 108 H430"
-                    stroke="#22D3EE"
-                    stroke-opacity="0.25"
-                    fill="none"
-                />
-
-                <circle
-                    cx="275"
-                    cy="10"
-                    r="9"
-                    fill="#FBBF24"
-                    opacity="0.18"
-                />
-
-                <circle
-                    cx="275"
-                    cy="10"
-                    r="4"
-                    fill="#FBBF24"
-                />
-
-                <text
-                    x="275"
-                    y="43"
-                    fill="#FBBF24"
-                    font-size="11"
-                    text-anchor="middle"
-                    font-weight="bold"
-                >
-                    GLOBAL OPTIMUM
-                </text>
-
-                <text
-                    x="95"
-                    y="27"
-                    fill="#94A3B8"
-                    font-size="9"
-                    text-anchor="middle"
-                >
-                    LOCAL OPTIMUM
-                </text>
-
-            </svg>
-
-            <div class="welcome-mission">
-                YOUR MISSION
-            </div>
-
-            <div class="welcome-mission-text">
-
-                Reach the exact Global Optimum at
-
-                <strong style="color:#FBBF24;">
-                    position 79
-                </strong>
-
-                within 30 generations.
-
-                <br>
-
-                Falling short or overshooting the target
-                at the end of the game means mission failed.
-
-            </div>
-
-            <div class="instructions-heading">
-                HOW TO PLAY
-            </div>
-
-            <div class="instruction-row">
-
-                <div class="instruction-number">
-                    01
+                <div class="instruction-title">
+                    Choose Your Strategy
                 </div>
 
-                <div class="instruction-content">
-
-                    <div class="instruction-title">
-                        Choose Your Strategy
-                    </div>
-
-                    <div class="instruction-text">
-                        Select Deterministic, Adaptive
-                        or Self-Adaptive Control.
-                    </div>
-
+                <div class="instruction-text">
+                    Select Deterministic, Adaptive
+                    or Self-Adaptive Control.
                 </div>
 
             </div>
 
-            <div class="instruction-row">
+        </div>
 
-                <div class="instruction-number">
-                    02
+        <div class="instruction-row">
+
+            <div class="instruction-number">
+                02
+            </div>
+
+            <div class="instruction-content">
+
+                <div class="instruction-title">
+                    Set Your Step Size
                 </div>
 
-                <div class="instruction-content">
-
-                    <div class="instruction-title">
-                        Set Your Step Size
-                    </div>
-
-                    <div class="instruction-text">
-                        Choose your initial mutation step size.
-                        Large steps explore; small steps refine.
-                    </div>
-
+                <div class="instruction-text">
+                    Large step sizes encourage exploration.
+                    Small step sizes encourage refinement.
                 </div>
 
             </div>
 
-            <div class="instruction-row">
+        </div>
 
-                <div class="instruction-number">
-                    03
+        <div class="instruction-row">
+
+            <div class="instruction-number">
+                03
+            </div>
+
+            <div class="instruction-content">
+
+                <div class="instruction-title">
+                    Reach the Exact Peak
                 </div>
 
-                <div class="instruction-content">
-
-                    <div class="instruction-title">
-                        Reach the Exact Peak
-                    </div>
-
-                    <div class="instruction-text">
-                        Press Next Generation or Run All
-                        to reach exactly position 79.
-                    </div>
-
+                <div class="instruction-text">
+                    Press Next Generation or Run All
+                    to reach exactly position 79.
                 </div>
 
             </div>
-            """,
 
-            unsafe_allow_html=True
-
-        )
+        </div>
+        """)
 
         st.button(
-
             "▶ START GAME",
-
             type="primary",
-
             key="start_game_button",
-
             use_container_width=True,
-
             on_click=handle_start_game
-
         )
-
 
 # ============================================================
 # 14. APPLICATION HEADER
