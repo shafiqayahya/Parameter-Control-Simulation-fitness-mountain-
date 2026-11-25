@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -291,6 +290,7 @@ strategies = {
 if "strategy" not in st.session_state:
     st.session_state.strategy = "Deterministic"
 
+
 columns = st.columns(3)
 
 for column, (name, details) in zip(
@@ -308,37 +308,25 @@ for column, (name, details) in zip(
         )
 
         st.markdown(
-            f"""
-            <div class="strategy-card"
-                 style="border-color:{border};">
-
-                <div class="strategy-icon">
-                    {details["icon"]}
-                </div>
-
-                <div class="strategy-title"
-                     style="color:{details["color"]};">
-                    {name}
-                </div>
-
-                <div class="strategy-description">
-                    {details["description"]}
-                </div>
-
-            </div>
-            """,
+            f'<div class="strategy-card" style="border-color:{border};">'
+            f'<div class="strategy-icon">{details["icon"]}</div>'
+            f'<div class="strategy-title" style="color:{details["color"]};">'
+            f'{name}</div>'
+            f'<div class="strategy-description">'
+            f'{details["description"]}</div>'
+            f'</div>',
             unsafe_allow_html=True
         )
 
         if st.button(
-            "Selected" if selected else "Select",
+            "✓ Selected" if selected else "Select",
             key=f"select_{name}",
             disabled=selected,
             use_container_width=True
         ):
             st.session_state.strategy = name
             st.rerun()
-
+            
 strategy = st.session_state.strategy
 accent = strategies[strategy]["color"]
 
