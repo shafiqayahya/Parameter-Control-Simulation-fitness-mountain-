@@ -45,15 +45,14 @@ background = load_background()
 # 03. GLOBAL CSS
 # ============================================================
 
-st.markdown(
-    f"""
+CSS = """
 <style>
 
 /* ==========================================================
    GLOBAL THEME
    ========================================================== */
 
-:root {{
+:root {
     --background: #080D1C;
     --panel: #111827;
     --border: #29384C;
@@ -63,727 +62,766 @@ st.markdown(
     --purple: #E879F9;
     --text: #E2E8F0;
     --muted: #94A3B8;
-}}
+}
 
-.stApp {{
+.stApp {
     background-color: var(--background);
     background-image:
         linear-gradient(
             rgba(5, 10, 25, 0.87),
             rgba(5, 10, 25, 0.87)
         ),
-        url("data:image/jpeg;base64,{background}");
+        url("data:image/jpeg;base64,__BACKGROUND__");
+
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     color: var(--text);
-}}
+}
 
-[data-testid="stHeader"] {{
+[data-testid="stHeader"] {
     background: transparent;
-}}
+}
 
-[data-testid="stSidebar"] {{
+[data-testid="stSidebar"] {
     display: none;
-}}
+}
 
-.block-container {{
+[data-testid="stAppViewContainer"] {
+    min-height: 100dvh;
+}
+
+.block-container {
+    width: 100%;
     max-width: 1800px;
-    padding-top: 1.6rem;
-    padding-bottom: 1rem;
-    padding-left: 2.4rem;
-    padding-right: 2.4rem;
-}}
+    padding: 1.1rem 2rem 0.75rem !important;
+    box-sizing: border-box;
+}
+
+.block-container > [data-testid="stVerticalBlock"] {
+    gap: 0.65rem !important;
+}
 
 
 /* ==========================================================
-   HEADER
+   APPLICATION HEADER
    ========================================================== */
 
-.hero {{
+.hero {
     text-align: center;
-    padding: 0 0 12px;
+    padding: 0 0 4px;
     margin: 0;
-}}
+}
 
-.hero-label {{
+.hero-label {
     color: var(--cyan);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 5px;
-    line-height: 1.5;
-    margin-bottom: 4px;
-}}
+    line-height: 1.4;
+    margin-bottom: 5px;
+}
 
-.hero-title {{
+.hero-title {
     color: #E0F2FE;
-    font-size: clamp(26px, 3vw, 36px);
+    font-size: clamp(25px, 3vw, 34px);
     font-weight: 900;
     letter-spacing: 5px;
     line-height: 1.2;
-    margin: 0 0 6px;
+    margin: 0 0 5px;
     text-shadow: 0 0 22px #0891B2;
-}}
+}
 
-.hero-subtitle {{
+.hero-subtitle {
     color: var(--muted);
     font-size: 10px;
     letter-spacing: 3px;
     line-height: 1.5;
-}}
+}
 
 
 /* ==========================================================
-   LEFT PANEL
+   MAIN DASHBOARD
    ========================================================== */
 
-.st-key-left_panel {{
+.st-key-main_dashboard {
     width: 100%;
     min-width: 0;
-}}
+    box-sizing: border-box;
+}
 
-.st-key-left_panel [data-testid="stVerticalBlock"] {{
-    gap: 0.55rem;
-}}
+.st-key-main_dashboard
+[data-testid="stHorizontalBlock"] {
+    align-items: flex-start;
+}
 
-.st-key-left_panel [data-testid="stHorizontalBlock"] {{
-    gap: 0.65rem;
-}}
+.st-key-main_dashboard
+[data-testid="stColumn"] {
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   LEFT CONTROL PANEL
+   ========================================================== */
+
+.st-key-left_panel {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.st-key-left_panel
+[data-testid="stVerticalBlock"] {
+    gap: 0.5rem !important;
+}
+
+.st-key-left_panel
+[data-testid="stHorizontalBlock"] {
+    gap: 0.65rem !important;
+}
+
+.st-key-left_panel
+[data-testid="stVerticalBlockBorderWrapper"] {
+    box-sizing: border-box;
+}
 
 
 /* ==========================================================
    SECTION HEADINGS
    ========================================================== */
 
-.section-heading {{
+.section-heading {
     display: block;
     color: var(--light-cyan);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.8px;
-    line-height: 1.6;
+    line-height: 1.5;
     padding: 0;
-    margin: 0 0 3px;
-}}
+    margin: 0;
+}
 
-.control-label {{
+.control-label {
     display: block;
     color: var(--text);
     font-size: 12px;
     font-weight: 500;
     line-height: 1.5;
     margin: 0;
-}}
+}
 
 
 /* ==========================================================
    RADIO BUTTONS
    ========================================================== */
 
-.st-key-left_panel [data-testid="stRadio"] {{
-    width: 100%;
+.st-key-left_panel
+[data-testid="stRadio"] {
+    width: 100% !important;
     max-width: 100%;
     background: transparent;
     border: none;
     padding: 0;
     margin: 0;
-}}
+}
 
-.st-key-left_panel [role="radiogroup"] {{
-    width: 100%;
+.st-key-left_panel
+[role="radiogroup"] {
+    width: 100% !important;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     box-sizing: border-box;
-    padding: 7px 10px;
+    padding: 5px 10px;
     border: 1px solid var(--border);
     border-radius: 9px;
     background: rgba(17, 24, 39, 0.85);
-}}
+}
 
-.st-key-left_panel [role="radiogroup"] label {{
+.st-key-left_panel
+[role="radiogroup"] label {
     width: 100%;
     margin: 0;
-    padding: 2px 0;
-}}
+    padding: 1px 0;
+}
 
-.st-key-left_panel [role="radiogroup"] p {{
+.st-key-left_panel
+[role="radiogroup"] p {
     font-size: 13px;
     line-height: 1.4;
-}}
+}
 
 
 /* ==========================================================
-   STRATEGY INFORMATION
+   STRATEGY DESCRIPTION
    ========================================================== */
 
-.strategy-description {{
+.strategy-description {
     display: block;
     width: 100%;
     box-sizing: border-box;
     background: rgba(17, 24, 39, 0.94);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 9px 11px;
+    padding: 8px 10px;
     margin: 0;
-}}
+}
 
-.strategy-description-title {{
+.strategy-description-title {
     font-size: 12px;
     font-weight: 700;
     line-height: 1.5;
     margin-bottom: 4px;
-}}
+}
 
-.strategy-description-text {{
+.strategy-description-text {
     color: #CBD5E1;
     font-size: 12px;
     line-height: 1.5;
     overflow-wrap: break-word;
-}}
+}
 
 
 /* ==========================================================
    SLIDER
    ========================================================== */
 
-.st-key-left_panel [data-testid="stSlider"] {{
+.st-key-left_panel
+[data-testid="stSlider"] {
     width: 100%;
-    padding: 0;
-    margin: 0;
-}}
+    padding: 0 !important;
+    margin: 0 !important;
+}
 
-.slider-help {{
+.st-key-left_panel
+[data-testid="stWidgetLabel"] p {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.slider-help {
     color: var(--muted);
     font-size: 11px;
-    line-height: 1.5;
+    line-height: 1.4;
     margin: 0;
-}}
+}
 
 
 /* ==========================================================
-   BUTTONS
+   GAME CONTROL BUTTONS
    ========================================================== */
 
-.stButton > button {{
+.stButton > button {
     width: 100%;
-    min-height: 36px;
-    padding: 7px 10px;
+    min-height: 35px;
+    padding: 6px 10px;
     box-sizing: border-box;
+
     background: rgba(17, 24, 39, 0.96);
     border: 1px solid var(--border);
     border-radius: 8px;
+
     color: var(--light-cyan);
     font-weight: 600;
+
     transition:
         background 0.2s ease,
         border-color 0.2s ease;
-}}
+}
 
-.stButton > button p {{
+.stButton > button p {
     font-size: 13px;
     line-height: 1.4;
-}}
+}
 
-.stButton > button[kind="primary"] {{
+.stButton > button[kind="primary"] {
     background: #155E75;
     border-color: var(--cyan);
     color: #FFFFFF;
-}}
+}
 
-.stButton > button:hover {{
+.stButton > button:hover {
     background: #164E63;
     border-color: var(--cyan);
     color: #FFFFFF;
-}}
+}
 
-.stButton > button:disabled {{
+.stButton > button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
-}}
+}
 
 
 /* ==========================================================
    MISSION BOX
    ========================================================== */
 
-.mission-card {{
+.mission-card {
     background: rgba(17, 24, 39, 0.78);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 9px 11px;
+    padding: 8px 10px;
     box-sizing: border-box;
-}}
+    margin: 0;
+}
 
-.mission-title {{
+.mission-title {
     color: var(--light-cyan);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.6px;
     line-height: 1.5;
-    margin-bottom: 5px;
-}}
+    margin-bottom: 4px;
+}
 
-.mission-text {{
+.mission-text {
     color: #A8BED3;
     font-size: 11px;
-    line-height: 1.6;
+    line-height: 1.5;
     overflow-wrap: break-word;
-}}
+}
 
 
 /* ==========================================================
    STATISTIC CARDS
    ========================================================== */
 
-.metric-grid {{
+.metric-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
     gap: 12px;
     width: 100%;
-}}
+}
 
-.metric-card {{
+.metric-card {
     background: rgba(17, 24, 39, 0.95);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 11px 14px;
+    padding: 10px 13px;
     min-width: 0;
     box-sizing: border-box;
-}}
+}
 
-.metric-label {{
+.metric-label {
     color: var(--muted);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.7px;
     line-height: 1.5;
-    margin-bottom: 6px;
-}}
+    margin-bottom: 5px;
+}
 
-.metric-value {{
+.metric-value {
     font-size: 25px;
     font-weight: 800;
     line-height: 1.2;
-}}
+}
 
 
 /* ==========================================================
-   GENERATION PROGRESS
+   GENERATION PROGRESS BAR
    ========================================================== */
 
-.progress-track {{
+.progress-track {
     width: 100%;
     height: 6px;
     background: #1E293B;
     border-radius: 20px;
     overflow: hidden;
     margin-top: 8px;
-}}
+}
 
-.progress-fill {{
+.progress-fill {
     height: 100%;
     background: linear-gradient(
         90deg,
         #0891B2,
         #22D3EE
     );
+
     border-radius: 20px;
     transition: width 0.3s ease;
-}}
+}
 
 
 /* ==========================================================
    RIGHT PANEL
    ========================================================== */
 
-.st-key-right_panel {{
+.st-key-right_panel {
     width: 100%;
     min-width: 0;
-}}
+    box-sizing: border-box;
+}
 
-.st-key-right_panel [data-testid="stVerticalBlock"] {{
-    gap: 0.7rem;
-}}
+.st-key-right_panel
+[data-testid="stVerticalBlock"] {
+    gap: 0.65rem !important;
+}
 
 
 /* ==========================================================
    FITNESS LANDSCAPE
    ========================================================== */
 
-.st-key-right_panel [data-testid="stImage"] img {{
-    display: block;
+.st-key-fitness_chart {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.st-key-fitness_chart
+[data-testid="stImage"] {
+    width: 100%;
+    margin: 0;
+}
+
+.st-key-fitness_chart
+[data-testid="stImage"] img {
+    display: block;
+    width: 100% !important;
     max-width: 100%;
-    height: auto;
+    height: auto !important;
+
     border: 1px solid var(--border);
     border-radius: 10px;
     box-sizing: border-box;
-}}
+    object-fit: contain;
+}
 
 
 /* ==========================================================
    LIVE EVOLUTION FEEDBACK
    ========================================================== */
 
-.feedback-box {{
+.feedback-box {
     display: block;
     width: 100%;
     background: rgba(17, 24, 39, 0.96);
     border: 1px solid var(--border);
     border-left: 4px solid var(--gold);
     border-radius: 9px;
-    padding: 11px 14px;
+    padding: 10px 13px;
     box-sizing: border-box;
-}}
+}
 
-.feedback-title {{
+.feedback-title {
     color: var(--gold);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.8px;
     line-height: 1.5;
-    margin-bottom: 6px;
-}}
+    margin-bottom: 5px;
+}
 
-.feedback-text {{
+.feedback-text {
     color: var(--text);
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.5;
     overflow-wrap: break-word;
-}}
+}
 
 
 /* ==========================================================
    BOTTOM NAVIGATION
    ========================================================== */
 
-.st-key-bottom_navigation {{
+.st-key-bottom_navigation {
+    width: 100%;
     border-top: 1px solid var(--border);
-    padding-top: 10px;
-    margin-top: 0;
-}}
+    padding-top: 8px;
+    margin: 0;
+    box-sizing: border-box;
+}
 
-.st-key-bottom_navigation [data-testid="stHorizontalBlock"] {{
-    gap: 12px;
-}}
+.st-key-bottom_navigation
+[data-testid="stHorizontalBlock"] {
+    gap: 12px !important;
+}
+
+.st-key-bottom_navigation
+.stButton > button {
+    min-height: 36px;
+}
 
 
 /* ==========================================================
-   RESPONSIVE DESKTOP
+   FIXED SINGLE SCREEN DESKTOP
    ========================================================== */
 
-@media (min-width: 1000px) and (max-height: 850px) {{
+@media (min-width: 1200px) and (min-height: 700px) {
 
-    .block-container {{
-        padding-top: 1.2rem;
-        padding-bottom: 0.5rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }}
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+    }
 
-    .hero {{
-        padding-bottom: 6px;
-    }}
+    .stApp {
+        height: 100dvh;
+        min-height: 100dvh;
+    }
 
-    .hero-title {{
+    [data-testid="stMain"] {
+        height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    [data-testid="stMain"]::-webkit-scrollbar {
+        display: none;
+        width: 0;
+    }
+
+    .block-container {
+        min-height: 100dvh;
+        padding-top: 0.85rem !important;
+        padding-bottom: 0.65rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+
+    .block-container >
+    [data-testid="stVerticalBlock"] {
+        min-height: calc(100dvh - 1.5rem);
+        gap: 0.55rem !important;
+    }
+
+    .st-key-bottom_navigation {
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .hero-label,
+    .hero-subtitle {
+        font-size: 9px;
+    }
+
+    .st-key-left_panel
+    [data-testid="stVerticalBlock"] {
+        gap: 0.4rem !important;
+    }
+
+    .st-key-right_panel
+    [data-testid="stVerticalBlock"] {
+        gap: 0.5rem !important;
+    }
+
+    .st-key-fitness_chart
+    [data-testid="stImage"] img {
+        max-height: 40dvh;
+    }
+}
+
+
+/* ==========================================================
+   COMPACT DESKTOP HEIGHT
+   ========================================================== */
+
+@media (min-width: 1200px) and (max-height: 820px) {
+
+    .block-container {
+        padding-top: 0.65rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .hero {
+        padding-bottom: 2px;
+    }
+
+    .hero-title {
         font-size: 30px;
-    }}
+        margin-bottom: 4px;
+    }
 
-    .hero-label {{
-        font-size: 9px;
-    }}
+    .hero-label {
+        margin-bottom: 3px;
+    }
 
-    .hero-subtitle {{
-        font-size: 9px;
-    }}
+    .section-heading {
+        font-size: 10px;
+        line-height: 1.5;
+    }
 
-    .metric-card {{
+    .st-key-left_panel
+    [data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;
+    }
+
+    .st-key-left_panel
+    [role="radiogroup"] {
+        padding: 4px 9px;
+        gap: 1px;
+    }
+
+    .st-key-left_panel
+    [role="radiogroup"] p {
+        font-size: 12px;
+    }
+
+    .strategy-description {
+        padding: 7px 9px;
+    }
+
+    .strategy-description-title {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .strategy-description-text {
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .slider-help {
+        font-size: 10px;
+    }
+
+    .mission-card {
+        padding: 7px 9px;
+    }
+
+    .mission-text {
+        font-size: 10.5px;
+        line-height: 1.45;
+    }
+
+    .metric-card {
         padding: 9px 12px;
-    }}
+    }
 
-    .metric-value {{
+    .metric-value {
         font-size: 23px;
-    }}
+    }
 
-    .strategy-description {{
-        padding: 8px 10px;
-    }}
-
-    .mission-card {{
-        padding: 8px 10px;
-    }}
-
-    .feedback-box {{
+    .feedback-box {
         padding: 9px 12px;
-    }}
+    }
 
-    .st-key-left_panel [data-testid="stVerticalBlock"] {{
-        gap: 0.45rem;
-    }}
+    .stButton > button {
+        min-height: 33px;
+        padding: 5px 9px;
+    }
 
-}}
+    .st-key-fitness_chart
+    [data-testid="stImage"] img {
+        max-height: 39dvh;
+    }
+
+    .st-key-bottom_navigation {
+        padding-top: 6px;
+    }
+}
+
+
+/* ==========================================================
+   STRICT STATIC DESKTOP MODE
+
+   Only lock scrolling when the available screen
+   height is sufficient for the dashboard.
+   ========================================================== */
+
+@media (min-width: 1400px) and (min-height: 850px) {
+
+    [data-testid="stMain"] {
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+    }
+
+}
+
+
+/* ==========================================================
+   POP-UP WINDOWS
+   ========================================================== */
+
+[data-testid="stDialog"] [role="dialog"] {
+    max-height: 90dvh;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+}
+
+[data-testid="stDialog"]
+[data-testid="stVerticalBlock"] {
+    gap: 0.8rem;
+}
 
 
 /* ==========================================================
    RESPONSIVE SMALL SCREENS
    ========================================================== */
 
-@media (max-width: 900px) {{
+@media (max-width: 1199px) {
 
-    .block-container {{
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }}
+    [data-testid="stMain"] {
+        overflow-y: auto !important;
+    }
 
-    .hero-title {{
-        font-size: 26px;
+    .block-container {
+        padding: 1.5rem 1rem !important;
+    }
+
+    .hero-title {
+        font-size: 28px;
         letter-spacing: 3px;
-    }}
+    }
 
-    .metric-grid {{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .metric-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
         gap: 8px;
-    }}
+    }
 
-    .metric-value {{
+    .metric-value {
         font-size: 22px;
-    }}
+    }
 
-}}
+}
 
+@media (max-width: 600px) {
 
-@media (max-width: 600px) {{
-
-    .hero-title {{
+    .hero-title {
         font-size: 23px;
         letter-spacing: 2px;
-    }}
+    }
 
-    .hero-label {{
+    .hero-label {
         letter-spacing: 2px;
-    }}
+    }
 
-    .hero-subtitle {{
+    .hero-subtitle {
         letter-spacing: 1px;
-    }}
+    }
 
-}}
-
-
-/* ==========================================================
-   FIXED SINGLE SCREEN DASHBOARD
-   ========================================================== */
-
-@media (min-width: 1200px) and (min-height: 700px) {{
-
-    /* MAIN SCREEN */
-
-    html,
-    body {{
-        height: 100%;
-        margin: 0;
-    }}
-
-    .stApp {{
-        height: 100dvh;
-    }}
-
-    [data-testid="stMain"] {{
-        height: 100dvh;
-    }}
-
-    /* MAIN DASHBOARD CONTAINER */
-
-    .block-container {{
-        max-width: 1800px;
-        padding-top: 1.1rem !important;
-        padding-bottom: 0.5rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        box-sizing: border-box;
-    }}
-
-    /* HEADER */
-
-    .hero {{
-        padding-top: 0 !important;
-        padding-bottom: 6px !important;
-        margin-bottom: 0 !important;
-    }}
-
-    .hero-label {{
-        font-size: 9px;
-        margin-bottom: 3px;
-    }}
-
-    .hero-title {{
-        font-size: 30px;
-        line-height: 1.2;
-        margin-bottom: 4px;
-    }}
-
-    .hero-subtitle {{
-        font-size: 9px;
-        line-height: 1.4;
-    }}
-
-    /* LEFT PANEL */
-
-    .st-key-left_panel {{
-        box-sizing: border-box;
-        width: 100%;
-    }}
-
-    .st-key-left_panel [data-testid="stVerticalBlock"] {{
-        gap: 0.4rem !important;
-    }}
-
-    /* SECTION HEADINGS */
-
-    .section-heading {{
-        margin-top: 0 !important;
-        margin-bottom: 4px !important;
-        line-height: 1.5;
-    }}
-
-    /* RADIO BUTTONS */
-
-    .st-key-left_panel [data-testid="stRadio"] {{
-        width: 100% !important;
-        margin: 0;
-    }}
-
-    .st-key-left_panel [role="radiogroup"] {{
-        width: 100% !important;
-        padding: 6px 10px;
-        gap: 3px;
-    }}
-
-    /* STRATEGY DESCRIPTION */
-
-    .strategy-description {{
-        padding: 8px 10px;
-    }}
-
-    .strategy-description-title {{
-        margin-bottom: 4px;
-    }}
-
-    .strategy-description-text {{
-        font-size: 12px;
-        line-height: 1.5;
-    }}
-
-    /* SLIDER */
-
-    .st-key-left_panel [data-testid="stSlider"] {{
-        padding: 0 !important;
-        margin: 0 !important;
-    }}
-
-    .slider-help {{
-        font-size: 10px;
-        line-height: 1.4;
-    }}
-
-    /* GAME CONTROLS */
-
-    .st-key-left_panel .stButton > button {{
-        min-height: 34px;
-        padding: 5px 10px;
-    }}
-
-    /* MISSION */
-
-    .mission-card {{
-        padding: 8px 10px;
-    }}
-
-    .mission-title {{
-        margin-bottom: 4px;
-    }}
-
-    .mission-text {{
-        font-size: 11px;
-        line-height: 1.5;
-    }}
-
-    /* RIGHT PANEL */
-
-    .st-key-right_panel [data-testid="stVerticalBlock"] {{
-        gap: 0.5rem !important;
-    }}
-
-    /* STATISTIC CARDS */
-
-    .metric-card {{
-        padding: 10px 13px;
-    }}
-
-    .metric-value {{
-        font-size: 24px;
-    }}
-
-    /* LIVE FEEDBACK */
-
-    .feedback-box {{
-        padding: 9px 13px;
-    }}
-
-    /* BOTTOM NAVIGATION */
-
-    .st-key-bottom_navigation {{
-        padding-top: 7px;
-        margin-top: 0;
-    }}
-
-    .st-key-bottom_navigation .stButton > button {{
-        min-height: 34px;
-        padding: 5px 10px;
-    }}
-
-    /* HIDE VISIBLE SCROLLBAR */
-
-    [data-testid="stMain"],
-    [data-testid="stMainBlockContainer"] {{
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }}
-
-    [data-testid="stMain"]::-webkit-scrollbar,
-    [data-testid="stMainBlockContainer"]::-webkit-scrollbar {{
-        display: none;
-        width: 0;
-    }}
-
-}}
-
-
-/* ==========================================================
-   KEEP POP-UP WINDOWS SCROLLABLE
-   ========================================================== */
-
-[data-testid="stDialog"] [role="dialog"] {{
-    max-height: 90dvh;
-    overflow-y: auto;
-}}
+}
 
 </style>
-    """,
+"""
+
+st.markdown(
+    CSS.replace("__BACKGROUND__", background),
     unsafe_allow_html=True
 )
+
 
 # ============================================================
 # 04. SIMULATION CONSTANTS
 # ============================================================
 
 MAX_GENERATIONS = 30
-
 POPULATION_SIZE = 5
 
 MIN_SIGMA = 0.5
-
 MAX_SIGMA = 50.0
 
 
@@ -876,13 +914,10 @@ def next_generation(strategy, initial_sigma):
         return
 
     population = st.session_state.population
-
     sigma = st.session_state.sigma
 
     offspring = []
-
     successes = 0
-
 
     # --------------------------------------------------------
     # MUTATION
@@ -903,7 +938,6 @@ def next_generation(strategy, initial_sigma):
 
             child_sigma = sigma
 
-
         child_x = np.clip(
             x + np.random.normal(0, child_sigma),
             0,
@@ -920,7 +954,6 @@ def next_generation(strategy, initial_sigma):
         if fitness(child_x) > fitness(x):
 
             successes += 1
-
 
     # --------------------------------------------------------
     # SURVIVAL SELECTION
@@ -943,7 +976,6 @@ def next_generation(strategy, initial_sigma):
 
     success_rate = successes / POPULATION_SIZE
 
-
     # --------------------------------------------------------
     # DETERMINISTIC CONTROL
     # --------------------------------------------------------
@@ -953,9 +985,7 @@ def next_generation(strategy, initial_sigma):
         new_sigma = max(
             MIN_SIGMA,
             initial_sigma
-            * (
-                1 - generation / MAX_GENERATIONS
-            )
+            * (1 - generation / MAX_GENERATIONS)
         )
 
         feedback = (
@@ -964,7 +994,6 @@ def next_generation(strategy, initial_sigma):
             f"{sigma:.2f} to {new_sigma:.2f} "
             "according to the predefined schedule."
         )
-
 
     # --------------------------------------------------------
     # ADAPTIVE CONTROL
@@ -993,9 +1022,7 @@ def next_generation(strategy, initial_sigma):
         else:
 
             new_sigma = sigma
-
             action = "maintained"
-
 
         feedback = (
             f"Successful mutations: "
@@ -1004,7 +1031,6 @@ def next_generation(strategy, initial_sigma):
             f"Step size {action}: "
             f"{sigma:.2f} → {new_sigma:.2f}."
         )
-
 
     # --------------------------------------------------------
     # SELF-ADAPTIVE CONTROL
@@ -1022,7 +1048,6 @@ def next_generation(strategy, initial_sigma):
             f"Best individual's step size: "
             f"{new_sigma:.2f}."
         )
-
 
     # --------------------------------------------------------
     # UPDATE SIMULATION STATE
@@ -1064,7 +1089,8 @@ def metric_html(label, value, color):
         '<div class="metric-label">'
         f'{escape(str(label))}'
         '</div>'
-        f'<div class="metric-value" style="color:{color};">'
+        f'<div class="metric-value" '
+        f'style="color:{color};">'
         f'{escape(str(value))}'
         '</div>'
         '</div>'
@@ -1140,14 +1166,9 @@ def display_fitness_landscape(accent):
 
     best_fitness = float(fitness(best_x))
 
-    x_values = np.linspace(
-        0,
-        100,
-        500
-    )
+    x_values = np.linspace(0, 100, 500)
 
     y_values = fitness(x_values)
-
 
     # --------------------------------------------------------
     # GRAPH CONFIGURATION
@@ -1162,7 +1183,6 @@ def display_fitness_landscape(accent):
 
     ax.set_facecolor("#0B1120")
 
-
     # --------------------------------------------------------
     # MOUNTAIN AREA
     # --------------------------------------------------------
@@ -1174,7 +1194,6 @@ def display_fitness_landscape(accent):
         alpha=0.12
     )
 
-
     # --------------------------------------------------------
     # NEON GLOW EFFECT
     # --------------------------------------------------------
@@ -1182,9 +1201,7 @@ def display_fitness_landscape(accent):
     for width, alpha in [
 
         (12, 0.025),
-
         (8, 0.04),
-
         (5, 0.08)
 
     ]:
@@ -1204,7 +1221,6 @@ def display_fitness_landscape(accent):
         linewidth=2
     )
 
-
     # --------------------------------------------------------
     # POPULATION MEMBERS
     # --------------------------------------------------------
@@ -1222,7 +1238,6 @@ def display_fitness_landscape(accent):
             zorder=5
         )
 
-
     # --------------------------------------------------------
     # BEST INDIVIDUAL GLOW
     # --------------------------------------------------------
@@ -1230,9 +1245,7 @@ def display_fitness_landscape(accent):
     for size, alpha in [
 
         (450, 0.05),
-
         (250, 0.10),
-
         (120, 0.18)
 
     ]:
@@ -1256,7 +1269,6 @@ def display_fitness_landscape(accent):
         zorder=7
     )
 
-
     # --------------------------------------------------------
     # LOCAL OPTIMUM
     # --------------------------------------------------------
@@ -1274,7 +1286,6 @@ def display_fitness_landscape(accent):
             linewidth=1
         )
     )
-
 
     # --------------------------------------------------------
     # GLOBAL OPTIMUM
@@ -1304,13 +1315,11 @@ def display_fitness_landscape(accent):
         )
     )
 
-
     # --------------------------------------------------------
     # AXIS FORMATTING
     # --------------------------------------------------------
 
     ax.set_xlim(0, 100)
-
     ax.set_ylim(0, 130)
 
     ax.set_xlabel(
@@ -1342,7 +1351,6 @@ def display_fitness_landscape(accent):
     for spine in ax.spines.values():
 
         spine.set_color("#26394C")
-
 
     # --------------------------------------------------------
     # GRAPH LEGEND
@@ -1388,7 +1396,7 @@ def display_fitness_landscape(accent):
     fig.legend(
         handles=legend_elements,
         loc="lower center",
-        bbox_to_anchor=(0.5, 0.015),
+        bbox_to_anchor=(0.5, 0.025),
         ncol=3,
         frameon=False,
         fontsize=8,
@@ -1397,21 +1405,24 @@ def display_fitness_landscape(accent):
         handletextpad=0.5
     )
 
-
-    # Reserve space for axes and legend.
-    # This prevents the legend from overlapping the graph.
+    # Reserve separate space for the axis labels
+    # and graph legend to prevent overlapping.
 
     fig.subplots_adjust(
         left=0.065,
         right=0.985,
-        top=0.96,
-        bottom=0.25
+        top=0.95,
+        bottom=0.26
     )
 
-    st.pyplot(
-        fig,
-        use_container_width=True
-    )
+    with st.container(key="fitness_chart"):
+
+        st.pyplot(
+            fig,
+            use_container_width=True,
+            bbox_inches=None,
+            pad_inches=0
+        )
 
     plt.close(fig)
 
@@ -1555,10 +1566,7 @@ def population_dialog():
             {
                 "Individual": i + 1,
 
-                "Position": round(
-                    x,
-                    2
-                ),
+                "Position": round(x, 2),
 
                 "Fitness": round(
                     float(fitness(x)),
@@ -1610,7 +1618,6 @@ def learning_dialog():
 
     )
 
-
     # --------------------------------------------------------
     # DETERMINISTIC CONTROL
     # --------------------------------------------------------
@@ -1643,7 +1650,6 @@ def learning_dialog():
             "The mutation step size decreases "
             "as the generation increases."
         )
-
 
     # --------------------------------------------------------
     # ADAPTIVE CONTROL
@@ -1690,7 +1696,6 @@ def learning_dialog():
             "step size based on successful mutations."
         )
 
-
     # --------------------------------------------------------
     # SELF-ADAPTIVE CONTROL
     # --------------------------------------------------------
@@ -1720,7 +1725,6 @@ def learning_dialog():
             "Different individuals may have "
             "different mutation step sizes."
         )
-
 
     # --------------------------------------------------------
     # CHALLENGE
@@ -1798,274 +1802,147 @@ st.markdown(
 # 15. MAIN DASHBOARD LAYOUT
 # ============================================================
 
-left, right = st.columns(
-    [1, 3],
-    gap="medium"
-)
-
-
-# ============================================================
-# 16. LEFT PANEL
-# ============================================================
-
-with left:
-
-    with st.container(
-        border=True,
-        key="left_panel"
-    ):
-
-
-        # ----------------------------------------------------
-        # 01 / CONTROL PANEL
-        # ----------------------------------------------------
-
-        section_heading(
-            "01 / CONTROL PANEL"
-        )
-
-
-        # Strategy label is rendered separately.
-        # This avoids overlap with the radio widget.
-
-        st.markdown(
-            '<div class="control-label">'
-            'Parameter Control Strategy'
-            '</div>',
-            unsafe_allow_html=True
-        )
-
-
-        # ----------------------------------------------------
-        # STRATEGY SELECTION
-        # ----------------------------------------------------
-
-        strategy = st.radio(
-
-            "Parameter Control Strategy",
-
-            options=list(
-                STRATEGIES.keys()
-            ),
-
-            format_func=lambda name: (
-                f'{STRATEGIES[name]["icon"]} {name}'
-            ),
-
-            label_visibility="collapsed",
-
-            key="selected_strategy"
-
-        )
-
-        accent = STRATEGIES[strategy]["color"]
-
-        description = STRATEGIES[strategy][
-            "description"
-        ]
-
-
-        # ----------------------------------------------------
-        # STRATEGY DESCRIPTION
-        # ----------------------------------------------------
-
-        st.markdown(
-
-            '<div class="strategy-description" '
-            f'style="border-left:3px solid {accent};">'
-
-            '<div class="strategy-description-title" '
-            f'style="color:{accent};">'
-            f'{escape(strategy)} Control'
-            '</div>'
-
-            '<div class="strategy-description-text">'
-            f'{escape(description)}'
-            '</div>'
-
-            '</div>',
-
-            unsafe_allow_html=True
-
-        )
-
-
-        # ----------------------------------------------------
-        # MUTATION STEP SIZE
-        # ----------------------------------------------------
-
-        st.markdown(
-
-            '<div class="control-label">'
-            'Initial Mutation Step Size (σ)'
-            '</div>',
-
-            unsafe_allow_html=True
-
-        )
-
-        initial_sigma = st.slider(
-
-            "Initial Mutation Step Size",
-
-            min_value=1,
-
-            max_value=30,
-
-            value=15,
-
-            step=1,
-
-            label_visibility="collapsed",
-
-            key="initial_sigma"
-
-        )
-
-        st.markdown(
-
-            '<div class="slider-help">'
-            'Large σ: exploration &nbsp;|&nbsp; '
-            'Small σ: refinement'
-            '</div>',
-
-            unsafe_allow_html=True
-
-        )
-
-
-        # ----------------------------------------------------
-        # INITIALIZE SESSION STATE
-        # ----------------------------------------------------
-
-        settings = (
-            strategy,
-            initial_sigma
-        )
-
-        required_keys = [
-
-            "generation",
-
-            "population",
-
-            "sigma",
-
-            "history",
-
-            "sigma_history",
-
-            "feedback",
-
-            "settings"
-
-        ]
-
-        missing_state = any(
-
-            key not in st.session_state
-
-            for key in required_keys
-
-        )
-
-        if (
-            missing_state
-            or st.session_state.get("settings") != settings
+with st.container(
+    key="main_dashboard"
+):
+
+    left, right = st.columns(
+        [1, 3],
+        gap="medium"
+    )
+
+    # ========================================================
+    # 16. LEFT CONTROL PANEL
+    # ========================================================
+
+    with left:
+
+        with st.container(
+            border=True,
+            key="left_panel"
         ):
 
-            reset_simulation(
+            # ------------------------------------------------
+            # 01 / CONTROL PANEL
+            # ------------------------------------------------
+
+            section_heading(
+                "01 / CONTROL PANEL"
+            )
+
+            # ------------------------------------------------
+            # STRATEGY SELECTION
+            # ------------------------------------------------
+
+            strategy = st.radio(
+
+                "Parameter Control Strategy",
+
+                options=list(
+                    STRATEGIES.keys()
+                ),
+
+                format_func=lambda name: (
+                    f'{STRATEGIES[name]["icon"]} {name}'
+                ),
+
+                key="selected_strategy"
+
+            )
+
+            accent = STRATEGIES[strategy]["color"]
+
+            description = STRATEGIES[strategy][
+                "description"
+            ]
+
+            # ------------------------------------------------
+            # STRATEGY DESCRIPTION
+            # ------------------------------------------------
+
+            st.markdown(
+
+                '<div class="strategy-description" '
+                f'style="border-left:3px solid {accent};">'
+
+                '<div class="strategy-description-title" '
+                f'style="color:{accent};">'
+                f'{escape(strategy)} Control'
+                '</div>'
+
+                '<div class="strategy-description-text">'
+                f'{escape(description)}'
+                '</div>'
+
+                '</div>',
+
+                unsafe_allow_html=True
+
+            )
+
+            # ------------------------------------------------
+            # MUTATION STEP SIZE
+            # ------------------------------------------------
+
+            initial_sigma = st.slider(
+
+                "Initial Mutation Step Size (σ)",
+
+                min_value=1,
+
+                max_value=30,
+
+                value=15,
+
+                step=1,
+
+                key="initial_sigma"
+
+            )
+
+            st.markdown(
+
+                '<div class="slider-help">'
+                'Large σ: exploration &nbsp;|&nbsp; '
+                'Small σ: refinement'
+                '</div>',
+
+                unsafe_allow_html=True
+
+            )
+
+            # ------------------------------------------------
+            # INITIALIZE SESSION STATE
+            # ------------------------------------------------
+
+            settings = (
                 strategy,
                 initial_sigma
             )
 
-        finished = (
-            st.session_state.generation
-            >= MAX_GENERATIONS
-        )
+            required_keys = [
 
+                "generation",
+                "population",
+                "sigma",
+                "history",
+                "sigma_history",
+                "feedback",
+                "settings"
 
-        # ----------------------------------------------------
-        # 02 / GAME CONTROLS
-        # ----------------------------------------------------
+            ]
 
-        section_heading(
-            "02 / GAME CONTROLS"
-        )
+            missing_state = any(
 
+                key not in st.session_state
 
-        # ----------------------------------------------------
-        # NEXT GENERATION BUTTON
-        # ----------------------------------------------------
+                for key in required_keys
 
-        if st.button(
-
-            "▶ Next Generation",
-
-            type="primary",
-
-            disabled=finished,
-
-            use_container_width=True,
-
-            key="next_generation_button"
-
-        ):
-
-            next_generation(
-                strategy,
-                initial_sigma
             )
 
-            st.rerun()
-
-
-        # ----------------------------------------------------
-        # RUN ALL AND RESET BUTTONS
-        # ----------------------------------------------------
-
-        run_col, reset_col = st.columns(
-            2,
-            gap="small"
-        )
-
-        with run_col:
-
-            if st.button(
-
-                "⏩ Run All",
-
-                disabled=finished,
-
-                use_container_width=True,
-
-                key="run_all_button"
-
-            ):
-
-                while (
-                    st.session_state.generation
-                    < MAX_GENERATIONS
-                ):
-
-                    next_generation(
-                        strategy,
-                        initial_sigma
-                    )
-
-                st.rerun()
-
-
-        with reset_col:
-
-            if st.button(
-
-                "↻ Reset",
-
-                use_container_width=True,
-
-                key="reset_button"
-
+            if (
+                missing_state
+                or st.session_state.get("settings") != settings
             ):
 
                 reset_simulation(
@@ -2073,72 +1950,157 @@ with left:
                     initial_sigma
                 )
 
+            finished = (
+                st.session_state.generation
+                >= MAX_GENERATIONS
+            )
+
+            # ------------------------------------------------
+            # 02 / GAME CONTROLS
+            # ------------------------------------------------
+
+            section_heading(
+                "02 / GAME CONTROLS"
+            )
+
+            # ------------------------------------------------
+            # NEXT GENERATION
+            # ------------------------------------------------
+
+            if st.button(
+
+                "▶ Next Generation",
+
+                type="primary",
+
+                disabled=finished,
+
+                use_container_width=True,
+
+                key="next_generation_button"
+
+            ):
+
+                next_generation(
+                    strategy,
+                    initial_sigma
+                )
+
                 st.rerun()
 
+            # ------------------------------------------------
+            # RUN ALL AND RESET
+            # ------------------------------------------------
 
-        # ----------------------------------------------------
-        # 03 / YOUR MISSION
-        # ----------------------------------------------------
+            run_col, reset_col = st.columns(
+                2,
+                gap="small"
+            )
 
-        st.markdown(
+            with run_col:
 
-            '<div class="mission-card">'
+                if st.button(
 
-            '<div class="mission-title">'
-            '03 / YOUR MISSION'
-            '</div>'
+                    "⏩ Run All",
 
-            '<div class="mission-text">'
-            'Reach the highest fitness peak within '
-            '30 generations. Compare how different '
-            'strategies control mutation step size.'
-            '</div>'
+                    disabled=finished,
 
-            '</div>',
+                    use_container_width=True,
 
-            unsafe_allow_html=True
+                    key="run_all_button"
 
-        )
+                ):
 
+                    while (
+                        st.session_state.generation
+                        < MAX_GENERATIONS
+                    ):
 
-# ============================================================
-# 17. RIGHT PANEL
-# ============================================================
+                        next_generation(
+                            strategy,
+                            initial_sigma
+                        )
 
-with right:
+                    st.rerun()
 
-    with st.container(
-        key="right_panel"
-    ):
+            with reset_col:
 
+                if st.button(
 
-        # ----------------------------------------------------
-        # STATISTIC CARDS AND PROGRESS BAR
-        # ----------------------------------------------------
+                    "↻ Reset",
 
-        display_metrics(
-            strategy
-        )
+                    use_container_width=True,
 
+                    key="reset_button"
 
-        # ----------------------------------------------------
-        # 04 / FITNESS LANDSCAPE
-        # ----------------------------------------------------
+                ):
 
-        section_heading(
-            "04 / FITNESS LANDSCAPE"
-        )
+                    reset_simulation(
+                        strategy,
+                        initial_sigma
+                    )
 
-        display_fitness_landscape(
-            accent
-        )
+                    st.rerun()
 
+            # ------------------------------------------------
+            # 03 / YOUR MISSION
+            # ------------------------------------------------
 
-        # ----------------------------------------------------
-        # LIVE EVOLUTION FEEDBACK
-        # ----------------------------------------------------
+            st.markdown(
 
-        display_feedback()
+                '<div class="mission-card">'
+
+                '<div class="mission-title">'
+                '03 / YOUR MISSION'
+                '</div>'
+
+                '<div class="mission-text">'
+                'Reach the highest fitness peak within '
+                '30 generations. Compare how different '
+                'strategies control mutation step size.'
+                '</div>'
+
+                '</div>',
+
+                unsafe_allow_html=True
+
+            )
+
+    # ========================================================
+    # 17. RIGHT PANEL
+    # ========================================================
+
+    with right:
+
+        with st.container(
+            key="right_panel"
+        ):
+
+            # ------------------------------------------------
+            # STATISTIC CARDS
+            # ------------------------------------------------
+
+            display_metrics(
+                strategy
+            )
+
+            # ------------------------------------------------
+            # 04 / FITNESS LANDSCAPE
+            # ------------------------------------------------
+
+            section_heading(
+                "04 / FITNESS LANDSCAPE"
+            )
+
+            display_fitness_landscape(
+                accent
+            )
+
+            # ------------------------------------------------
+            # LIVE EVOLUTION FEEDBACK
+            # ------------------------------------------------
+
+            display_feedback()
 
 
 # ============================================================
@@ -2153,7 +2115,6 @@ with st.container(
         3,
         gap="medium"
     )
-
 
     # --------------------------------------------------------
     # PERFORMANCE ANALYSIS
@@ -2173,7 +2134,6 @@ with st.container(
 
             performance_dialog()
 
-
     # --------------------------------------------------------
     # POPULATION DETAILS
     # --------------------------------------------------------
@@ -2191,7 +2151,6 @@ with st.container(
         ):
 
             population_dialog()
-
 
     # --------------------------------------------------------
     # LEARNING GUIDE
