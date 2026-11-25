@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -66,6 +65,7 @@ CSS = """
 
 .stApp {
     background-color: var(--background);
+
     background-image:
         linear-gradient(
             rgba(5, 10, 25, 0.87),
@@ -76,6 +76,7 @@ CSS = """
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+
     color: var(--text);
 }
 
@@ -91,15 +92,21 @@ CSS = """
     min-height: 100dvh;
 }
 
+[data-testid="stMain"] {
+    overflow-x: hidden;
+}
+
 .block-container {
     width: 100%;
     max-width: 1800px;
+
     padding: 1.1rem 2rem 0.75rem !important;
+
     box-sizing: border-box;
 }
 
 .block-container > [data-testid="stVerticalBlock"] {
-    gap: 0.65rem !important;
+    gap: 0.75rem !important;
 }
 
 
@@ -108,35 +115,54 @@ CSS = """
    ========================================================== */
 
 .hero {
+    display: block;
+
+    width: 100%;
+
     text-align: center;
-    padding: 0 0 4px;
+
+    padding: 0 0 18px;
+
     margin: 0;
+
+    box-sizing: border-box;
 }
 
 .hero-label {
     color: var(--cyan);
+
     font-size: 10px;
     font-weight: 700;
+
     letter-spacing: 5px;
     line-height: 1.4;
-    margin-bottom: 5px;
+
+    margin: 0 0 7px;
 }
 
 .hero-title {
     color: #E0F2FE;
+
     font-size: clamp(25px, 3vw, 34px);
     font-weight: 900;
+
     letter-spacing: 5px;
     line-height: 1.2;
-    margin: 0 0 5px;
+
+    margin: 0 0 9px;
+
     text-shadow: 0 0 22px #0891B2;
 }
 
 .hero-subtitle {
     color: var(--muted);
+
     font-size: 10px;
+
     letter-spacing: 3px;
     line-height: 1.5;
+
+    margin: 0;
 }
 
 
@@ -147,6 +173,9 @@ CSS = """
 .st-key-main_dashboard {
     width: 100%;
     min-width: 0;
+
+    margin-top: 6px;
+
     box-sizing: border-box;
 }
 
@@ -168,12 +197,13 @@ CSS = """
 .st-key-left_panel {
     width: 100%;
     min-width: 0;
+
     box-sizing: border-box;
 }
 
 .st-key-left_panel
 [data-testid="stVerticalBlock"] {
-    gap: 0.5rem !important;
+    gap: 0.55rem !important;
 }
 
 .st-key-left_panel
@@ -186,6 +216,12 @@ CSS = """
     box-sizing: border-box;
 }
 
+.st-key-left_panel
+[data-testid="stElementContainer"] {
+    min-width: 0;
+    flex-shrink: 0;
+}
+
 
 /* ==========================================================
    SECTION HEADINGS
@@ -193,21 +229,30 @@ CSS = """
 
 .section-heading {
     display: block;
+
     color: var(--light-cyan);
+
     font-size: 11px;
     font-weight: 800;
+
     letter-spacing: 1.8px;
     line-height: 1.5;
+
     padding: 0;
-    margin: 0;
+
+    margin: 0 0 4px;
 }
 
 .control-label {
     display: block;
+
     color: var(--text);
+
     font-size: 12px;
     font-weight: 500;
+
     line-height: 1.5;
+
     margin: 0;
 }
 
@@ -220,8 +265,11 @@ CSS = """
 [data-testid="stRadio"] {
     width: 100% !important;
     max-width: 100%;
+
     background: transparent;
+
     border: none;
+
     padding: 0;
     margin: 0;
 }
@@ -229,19 +277,26 @@ CSS = """
 .st-key-left_panel
 [role="radiogroup"] {
     width: 100% !important;
+
     display: flex;
     flex-direction: column;
-    gap: 2px;
+
+    gap: 3px;
+
     box-sizing: border-box;
-    padding: 5px 10px;
+
+    padding: 6px 10px;
+
     border: 1px solid var(--border);
     border-radius: 9px;
+
     background: rgba(17, 24, 39, 0.85);
 }
 
 .st-key-left_panel
 [role="radiogroup"] label {
     width: 100%;
+
     margin: 0;
     padding: 1px 0;
 }
@@ -259,26 +314,36 @@ CSS = """
 
 .strategy-description {
     display: block;
+
     width: 100%;
+
     box-sizing: border-box;
+
     background: rgba(17, 24, 39, 0.94);
+
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 10px;
-    margin: 0;
+
+    padding: 9px 11px;
+
+    margin: 0 0 4px;
 }
 
 .strategy-description-title {
     font-size: 12px;
     font-weight: 700;
+
     line-height: 1.5;
+
     margin-bottom: 4px;
 }
 
 .strategy-description-text {
     color: #CBD5E1;
+
     font-size: 12px;
     line-height: 1.5;
+
     overflow-wrap: break-word;
 }
 
@@ -290,8 +355,15 @@ CSS = """
 .st-key-left_panel
 [data-testid="stSlider"] {
     width: 100%;
-    padding: 0 !important;
+
+    padding: 2px 0 0 !important;
+
     margin: 0 !important;
+}
+
+.st-key-left_panel
+[data-testid="stWidgetLabel"] {
+    margin-bottom: 4px;
 }
 
 .st-key-left_panel
@@ -301,10 +373,14 @@ CSS = """
 }
 
 .slider-help {
+    display: block;
+
     color: var(--muted);
+
     font-size: 11px;
-    line-height: 1.4;
-    margin: 0;
+    line-height: 1.5;
+
+    margin: 0 0 5px;
 }
 
 
@@ -314,15 +390,20 @@ CSS = """
 
 .stButton > button {
     width: 100%;
+
     min-height: 35px;
+
     padding: 6px 10px;
+
     box-sizing: border-box;
 
     background: rgba(17, 24, 39, 0.96);
+
     border: 1px solid var(--border);
     border-radius: 8px;
 
     color: var(--light-cyan);
+
     font-weight: 600;
 
     transition:
@@ -337,18 +418,23 @@ CSS = """
 
 .stButton > button[kind="primary"] {
     background: #155E75;
+
     border-color: var(--cyan);
+
     color: #FFFFFF;
 }
 
 .stButton > button:hover {
     background: #164E63;
+
     border-color: var(--cyan);
+
     color: #FFFFFF;
 }
 
 .stButton > button:disabled {
     opacity: 0.45;
+
     cursor: not-allowed;
 }
 
@@ -358,27 +444,40 @@ CSS = """
    ========================================================== */
 
 .mission-card {
+    display: block;
+
+    width: 100%;
+
     background: rgba(17, 24, 39, 0.78);
+
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 10px;
+
+    padding: 9px 11px;
+
     box-sizing: border-box;
-    margin: 0;
+
+    margin: 3px 0 0;
 }
 
 .mission-title {
     color: var(--light-cyan);
+
     font-size: 10px;
     font-weight: 800;
+
     letter-spacing: 1.6px;
     line-height: 1.5;
-    margin-bottom: 4px;
+
+    margin-bottom: 5px;
 }
 
 .mission-text {
     color: #A8BED3;
+
     font-size: 11px;
     line-height: 1.5;
+
     overflow-wrap: break-word;
 }
 
@@ -389,34 +488,50 @@ CSS = """
 
 .metric-grid {
     display: grid;
+
     grid-template-columns:
         repeat(4, minmax(0, 1fr));
 
     gap: 12px;
+
     width: 100%;
 }
 
 .metric-card {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
     background: rgba(17, 24, 39, 0.95);
+
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px 13px;
+
+    padding: 11px 13px;
+
     min-width: 0;
+    min-height: 70px;
+
     box-sizing: border-box;
 }
 
 .metric-label {
     color: var(--muted);
+
     font-size: 10px;
     font-weight: 600;
+
     letter-spacing: 0.7px;
     line-height: 1.5;
-    margin-bottom: 5px;
+
+    margin-bottom: 6px;
 }
 
 .metric-value {
     font-size: 25px;
     font-weight: 800;
+
     line-height: 1.2;
 }
 
@@ -428,14 +543,20 @@ CSS = """
 .progress-track {
     width: 100%;
     height: 6px;
+
     background: #1E293B;
+
     border-radius: 20px;
+
     overflow: hidden;
-    margin-top: 8px;
+
+    margin-top: 10px;
+    margin-bottom: 2px;
 }
 
 .progress-fill {
     height: 100%;
+
     background: linear-gradient(
         90deg,
         #0891B2,
@@ -443,6 +564,7 @@ CSS = """
     );
 
     border-radius: 20px;
+
     transition: width 0.3s ease;
 }
 
@@ -454,6 +576,7 @@ CSS = """
 .st-key-right_panel {
     width: 100%;
     min-width: 0;
+
     box-sizing: border-box;
 }
 
@@ -470,25 +593,31 @@ CSS = """
 .st-key-fitness_chart {
     width: 100%;
     min-width: 0;
+
     box-sizing: border-box;
 }
 
 .st-key-fitness_chart
 [data-testid="stImage"] {
     width: 100%;
+
     margin: 0;
 }
 
 .st-key-fitness_chart
 [data-testid="stImage"] img {
     display: block;
+
     width: 100% !important;
     max-width: 100%;
+
     height: auto !important;
 
     border: 1px solid var(--border);
     border-radius: 10px;
+
     box-sizing: border-box;
+
     object-fit: contain;
 }
 
@@ -499,28 +628,41 @@ CSS = """
 
 .feedback-box {
     display: block;
+
     width: 100%;
+
     background: rgba(17, 24, 39, 0.96);
+
     border: 1px solid var(--border);
     border-left: 4px solid var(--gold);
+
     border-radius: 9px;
-    padding: 10px 13px;
+
+    padding: 11px 13px;
+
+    margin-top: 3px;
+
     box-sizing: border-box;
 }
 
 .feedback-title {
     color: var(--gold);
+
     font-size: 10px;
     font-weight: 800;
+
     letter-spacing: 1.8px;
     line-height: 1.5;
-    margin-bottom: 5px;
+
+    margin-bottom: 6px;
 }
 
 .feedback-text {
     color: var(--text);
+
     font-size: 12px;
     line-height: 1.5;
+
     overflow-wrap: break-word;
 }
 
@@ -531,9 +673,13 @@ CSS = """
 
 .st-key-bottom_navigation {
     width: 100%;
+
     border-top: 1px solid var(--border);
-    padding-top: 8px;
-    margin: 0;
+
+    padding-top: 9px;
+
+    margin: 4px 0 0;
+
     box-sizing: border-box;
 }
 
@@ -549,7 +695,7 @@ CSS = """
 
 
 /* ==========================================================
-   FIXED SINGLE SCREEN DESKTOP
+   SINGLE SCREEN DESKTOP
    ========================================================== */
 
 @media (min-width: 1200px) and (min-height: 700px) {
@@ -567,8 +713,10 @@ CSS = """
 
     [data-testid="stMain"] {
         height: 100dvh;
+
         overflow-y: auto;
         overflow-x: hidden;
+
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
@@ -579,22 +727,20 @@ CSS = """
     }
 
     .block-container {
-        min-height: 100dvh;
         padding-top: 0.85rem !important;
         padding-bottom: 0.65rem !important;
+
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
 
     .block-container >
     [data-testid="stVerticalBlock"] {
-        min-height: calc(100dvh - 1.5rem);
-        gap: 0.55rem !important;
+        gap: 0.65rem !important;
     }
 
-    .st-key-bottom_navigation {
-        margin-top: auto;
-        flex-shrink: 0;
+    .hero {
+        padding-bottom: 18px;
     }
 
     .hero-title {
@@ -606,14 +752,18 @@ CSS = """
         font-size: 9px;
     }
 
+    .st-key-main_dashboard {
+        margin-top: 6px;
+    }
+
     .st-key-left_panel
     [data-testid="stVerticalBlock"] {
-        gap: 0.4rem !important;
+        gap: 0.45rem !important;
     }
 
     .st-key-right_panel
     [data-testid="stVerticalBlock"] {
-        gap: 0.5rem !important;
+        gap: 0.55rem !important;
     }
 
     .st-key-fitness_chart
@@ -635,21 +785,32 @@ CSS = """
     }
 
     .hero {
-        padding-bottom: 2px;
+        padding-bottom: 14px;
     }
 
     .hero-title {
         font-size: 30px;
-        margin-bottom: 4px;
+
+        margin-bottom: 7px;
     }
 
     .hero-label {
-        margin-bottom: 3px;
+        margin-bottom: 5px;
+    }
+
+    .hero-subtitle {
+        line-height: 1.5;
+    }
+
+    .st-key-main_dashboard {
+        margin-top: 4px;
     }
 
     .section-heading {
         font-size: 10px;
         line-height: 1.5;
+
+        margin-bottom: 3px;
     }
 
     .st-key-left_panel
@@ -660,6 +821,7 @@ CSS = """
     .st-key-left_panel
     [role="radiogroup"] {
         padding: 4px 9px;
+
         gap: 1px;
     }
 
@@ -670,10 +832,13 @@ CSS = """
 
     .strategy-description {
         padding: 7px 9px;
+
+        margin-bottom: 3px;
     }
 
     .strategy-description-title {
         font-size: 11px;
+
         margin-bottom: 3px;
     }
 
@@ -684,6 +849,8 @@ CSS = """
 
     .slider-help {
         font-size: 10px;
+
+        margin-bottom: 3px;
     }
 
     .mission-card {
@@ -697,6 +864,8 @@ CSS = """
 
     .metric-card {
         padding: 9px 12px;
+
+        min-height: 65px;
     }
 
     .metric-value {
@@ -709,28 +878,31 @@ CSS = """
 
     .stButton > button {
         min-height: 33px;
+
         padding: 5px 9px;
     }
 
     .st-key-fitness_chart
     [data-testid="stImage"] img {
-        max-height: 39dvh;
+        max-height: 38dvh;
     }
 
     .st-key-bottom_navigation {
         padding-top: 6px;
+
+        margin-top: 2px;
     }
 }
 
 
 /* ==========================================================
-   STRICT STATIC DESKTOP MODE
+   STATIC DESKTOP MODE
 
-   Only lock scrolling when the available screen
-   height is sufficient for the dashboard.
+   Lock the main dashboard only when sufficient
+   viewport space is available.
    ========================================================== */
 
-@media (min-width: 1400px) and (min-height: 850px) {
+@media (min-width: 1400px) and (min-height: 740px) {
 
     [data-testid="stMain"] {
         overflow-y: hidden !important;
@@ -746,6 +918,7 @@ CSS = """
 
 [data-testid="stDialog"] [role="dialog"] {
     max-height: 90dvh;
+
     overflow-y: auto !important;
     overflow-x: hidden;
 }
@@ -768,6 +941,10 @@ CSS = """
 
     .block-container {
         padding: 1.5rem 1rem !important;
+    }
+
+    .hero {
+        padding-bottom: 16px;
     }
 
     .hero-title {
@@ -801,6 +978,14 @@ CSS = """
 
     .hero-subtitle {
         letter-spacing: 1px;
+    }
+
+    .hero {
+        padding-bottom: 12px;
+    }
+
+    .metric-card {
+        min-height: 65px;
     }
 
 }
@@ -1086,13 +1271,16 @@ def metric_html(label, value, color):
 
     return (
         '<div class="metric-card">'
+
         '<div class="metric-label">'
         f'{escape(str(label))}'
         '</div>'
+
         f'<div class="metric-value" '
         f'style="color:{color};">'
         f'{escape(str(value))}'
         '</div>'
+
         '</div>'
     )
 
@@ -1405,8 +1593,9 @@ def display_fitness_landscape(accent):
         handletextpad=0.5
     )
 
-    # Reserve separate space for the axis labels
-    # and graph legend to prevent overlapping.
+    # --------------------------------------------------------
+    # GRAPH SPACING
+    # --------------------------------------------------------
 
     fig.subplots_adjust(
         left=0.065,
@@ -1459,13 +1648,17 @@ def display_feedback():
 
     st.markdown(
         '<div class="feedback-box">'
+
         '<div class="feedback-title">'
         'LIVE EVOLUTION FEEDBACK'
         '</div>'
+
         '<div class="feedback-text">'
         f'{escape(feedback)}'
         '</div>'
+
         '</div>',
+
         unsafe_allow_html=True
     )
 
