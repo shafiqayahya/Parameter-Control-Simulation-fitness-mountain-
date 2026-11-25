@@ -1,5 +1,6 @@
-import streamlit.components.v1 as components
+
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 import pandas as pd
 import base64
@@ -13,7 +14,7 @@ from html import escape
 # ============================================================
 
 st.set_page_config(
-    page_title="Fitness Mountain V6",
+    page_title="Fitness Mountain V7",
     page_icon="⛰️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -21,13 +22,14 @@ st.set_page_config(
 
 
 # ============================================================
-# 02. GAME CONSTANTS
+# 02. GAME CONFIGURATION
 # ============================================================
 
-GAME_VERSION = "FITNESS_MOUNTAIN_V6"
+GAME_VERSION = "FITNESS_MOUNTAIN_V7"
 
 MAX_GENERATIONS = 30
 POPULATION_SIZE = 5
+MAX_LIVES = 3
 
 INITIAL_POSITION = 10
 LOCAL_OPTIMUM = 27
@@ -42,6 +44,7 @@ MAX_SIGMA = 50.0
 RANDOM_SEED = 44
 
 POWERS = {
+
     "Deterministic": {
         "name": "TIME",
         "icon": "⏳",
@@ -49,8 +52,7 @@ POWERS = {
         "description": (
             "Your jump power becomes smaller "
             "as time passes."
-        ),
-        "default": 15
+        )
     },
 
     "Adaptive": {
@@ -60,8 +62,7 @@ POWERS = {
         "description": (
             "Your jump power changes according "
             "to your team's performance."
-        ),
-        "default": 15
+        )
     },
 
     "Self-Adaptive": {
@@ -69,10 +70,9 @@ POWERS = {
         "icon": "🧬",
         "color": "#E879F9",
         "description": (
-            "Every climber evolves their "
-            "own jumping power."
-        ),
-        "default": 15
+            "Each climber evolves their "
+            "own jump power."
+        )
     },
 
     "Manual": {
@@ -80,16 +80,15 @@ POWERS = {
         "icon": "🎮",
         "color": "#4ADE80",
         "description": (
-            "Control your jump power and "
-            "preview your next move."
-        ),
-        "default": 20
+            "Choose your jump power "
+            "and preview your next move."
+        )
     }
 }
 
 
 # ============================================================
-# 03. BACKGROUND
+# 03. BACKGROUND IMAGE
 # ============================================================
 
 @st.cache_data
@@ -110,7 +109,7 @@ BACKGROUND = load_background()
 
 
 # ============================================================
-# 04. CSS — FULL SCREEN GAME INTERFACE
+# 04. DARK NEON CSS
 # ============================================================
 
 CSS = """
@@ -151,6 +150,7 @@ body,
     max-height: 100dvh !important;
 
     overflow: hidden !important;
+
     overscroll-behavior: none !important;
 }
 
@@ -161,7 +161,7 @@ body,
     background-image:
 
         linear-gradient(
-            rgba(5,10,22,0.85),
+            rgba(5,10,22,0.82),
             rgba(5,10,22,0.94)
         ),
 
@@ -169,7 +169,6 @@ body,
 
     background-position: center;
     background-size: cover;
-    background-attachment: fixed;
 
     color: #E2E8F0;
 }
@@ -177,7 +176,7 @@ body,
 [data-testid="stHeader"] {
 
     background: transparent;
-    height: 25px;
+    height: 0 !important;
 }
 
 [data-testid="stToolbar"],
@@ -195,11 +194,12 @@ footer {
 
     height: 100dvh !important;
 
-    padding: 10px 24px 12px !important;
+    padding: 10px 22px !important;
 
     margin: 0 auto !important;
 
     box-sizing: border-box;
+
     overflow: hidden !important;
 }
 
@@ -211,7 +211,7 @@ footer {
     display: flex;
     flex-direction: column;
 
-    gap: 8px !important;
+    gap: 6px !important;
 
     min-height: 0;
 }
@@ -251,7 +251,7 @@ footer {
 .hero {
 
     text-align: center;
-    padding: 3px 0;
+    padding: 2px 0;
 }
 
 .hero-top {
@@ -267,7 +267,7 @@ footer {
 
     color: #ECFEFF;
 
-    font-size: calc(40 * var(--scale));
+    font-size: calc(37 * var(--scale));
     font-weight: 900;
 
     line-height: 1.1;
@@ -286,7 +286,6 @@ footer {
     color: #94A3B8;
 
     font-size: calc(11 * var(--scale));
-
     letter-spacing: 4px;
     font-weight: 700;
 }
@@ -296,7 +295,6 @@ footer {
     display: inline-block;
 
     padding: 4px 14px;
-
     margin-top: 5px;
 
     color: #67E8F9;
@@ -319,20 +317,19 @@ footer {
 .st-key-welcome {
 
     width: 100%;
-    max-width: 1000px;
+    max-width: 1050px;
 
     margin: auto !important;
 
-    padding: 15px 25px !important;
+    padding: 15px 22px !important;
 
-    background: rgba(5,10,22,0.96);
+    background: rgba(5,10,22,0.94);
 
     border: 1px solid #155E75;
     border-radius: 20px;
 
     box-shadow:
-
-        0 0 50px rgba(34,211,238,0.12);
+        0 0 40px rgba(34,211,238,0.12);
 }
 
 .mission-heading {
@@ -343,7 +340,6 @@ footer {
 
     font-size: calc(24 * var(--scale));
     font-weight: 900;
-
     letter-spacing: 2px;
 }
 
@@ -354,18 +350,15 @@ footer {
     color: #CBD5E1;
 
     font-size: calc(13 * var(--scale));
-    line-height: 1.4;
 }
 
 .instructions {
 
     display: grid;
-
     grid-template-columns: repeat(3,1fr);
 
     gap: 10px;
-
-    margin: 8px 0;
+    margin: 6px 0;
 }
 
 .instruction-card {
@@ -375,16 +368,14 @@ footer {
     border: 1px solid #29384C;
     border-radius: 12px;
 
-    padding: 12px;
+    padding: 10px;
 
     text-align: center;
 }
 
 .instruction-icon {
 
-    font-size: calc(27 * var(--scale));
-
-    margin-bottom: 5px;
+    font-size: calc(28 * var(--scale));
 }
 
 .instruction-title {
@@ -394,7 +385,7 @@ footer {
     font-size: calc(14 * var(--scale));
     font-weight: 800;
 
-    margin-bottom: 5px;
+    margin: 5px 0;
 }
 
 .instruction-text {
@@ -414,8 +405,6 @@ footer {
 
     padding: 12px;
 
-    min-height: 85px;
-
     text-align: center;
 }
 
@@ -424,7 +413,7 @@ footer {
     font-size: calc(18 * var(--scale));
     font-weight: 900;
 
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
 .menu-text {
@@ -432,17 +421,17 @@ footer {
     color: #CBD5E1;
 
     font-size: calc(12 * var(--scale));
-    line-height: 1.4;
 }
 
 
 /* =========================================================
-   GAME LAYOUT
+   GAME AREA
    ========================================================= */
 
 .st-key-game_area {
 
     flex: 1 1 auto;
+
     min-height: 0;
 }
 
@@ -451,7 +440,6 @@ footer {
     color: #94A3B8;
 
     font-size: calc(11 * var(--scale));
-
     font-weight: 800;
     letter-spacing: 1.5px;
 
@@ -475,7 +463,7 @@ footer {
     font-size: calc(13 * var(--scale));
     font-weight: 800;
 
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .card-text {
@@ -496,7 +484,69 @@ footer {
 
 
 /* =========================================================
-   GAME STATISTICS
+   LIVES
+   ========================================================= */
+
+.lives-panel {
+
+    background: #101827;
+
+    border: 1px solid #29384C;
+    border-radius: 12px;
+
+    text-align: center;
+
+    padding: 7px 10px;
+}
+
+.lives-title {
+
+    color: #94A3B8;
+
+    font-size: calc(10 * var(--scale));
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+.hearts {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 14px;
+
+    margin: 3px 0;
+}
+
+.heart-active {
+
+    color: #F87171;
+
+    font-size: calc(29 * var(--scale));
+
+    text-shadow:
+        0 0 12px rgba(248,113,113,0.5);
+}
+
+.heart-lost {
+
+    color: #334155;
+
+    font-size: calc(29 * var(--scale));
+}
+
+.lives-caption {
+
+    color: #CBD5E1;
+
+    font-size: calc(10 * var(--scale));
+}
+
+
+/* =========================================================
+   STATISTICS
    ========================================================= */
 
 .stats-grid {
@@ -515,7 +565,7 @@ footer {
     border: 1px solid #29384C;
     border-radius: 12px;
 
-    padding: 10px 12px;
+    padding: 9px 10px;
 
     text-align: center;
 }
@@ -525,38 +575,39 @@ footer {
     color: #94A3B8;
 
     font-size: calc(11 * var(--scale));
-
     font-weight: 800;
+
     letter-spacing: 1px;
 }
 
 .stat-value {
 
-    font-size: calc(33 * var(--scale));
+    font-size: calc(31 * var(--scale));
     font-weight: 900;
 
     line-height: 1.2;
 
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 .stat-description {
 
-    color: #64748B;
+    color: #94A3B8;
 
     font-size: calc(10 * var(--scale));
 }
 
 .progress-track {
 
-    height: 6px;
+    height: 5px;
 
     background: #1E293B;
 
     border-radius: 20px;
+
     overflow: hidden;
 
-    margin-top: 7px;
+    margin-top: 6px;
 }
 
 .progress-fill {
@@ -568,121 +619,11 @@ footer {
         #0891B2,
         #22D3EE
     );
-
-    border-radius: 20px;
 }
 
 
 /* =========================================================
-   MOUNTAIN ARENA
-   ========================================================= */
-
-.arena {
-
-    width: 100%;
-
-    background: linear-gradient(
-        180deg,
-        #071322,
-        #080D1C
-    );
-
-    border: 1px solid #164E63;
-    border-radius: 14px;
-
-    overflow: hidden;
-}
-
-.arena svg {
-
-    display: block;
-
-    width: 100%;
-    height: 43dvh;
-
-    max-height: 510px;
-}
-
-.practice-arena svg {
-
-    height: 36dvh;
-}
-
-.welcome-arena svg {
-
-    height: 23dvh;
-    max-height: 230px;
-}
-
-.arena-top {
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 8px 12px;
-
-    color: #67E8F9;
-
-    font-size: calc(11 * var(--scale));
-    font-weight: 800;
-
-    letter-spacing: 1px;
-
-    border-bottom: 1px solid #164E63;
-}
-
-.live-dot {
-
-    display: inline-block;
-
-    width: 8px;
-    height: 8px;
-
-    margin-right: 5px;
-
-    background: #4ADE80;
-
-    border-radius: 50%;
-
-    box-shadow: 0 0 10px #4ADE80;
-
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-
-    0%,100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.35;
-    }
-}
-
-.climber-glow {
-
-    animation: pulse 2s infinite;
-}
-
-.jump-trail {
-
-    stroke-dasharray: 8 7;
-
-    animation: trail 1.2s linear infinite;
-}
-
-@keyframes trail {
-
-    to {
-        stroke-dashoffset: -30;
-    }
-}
-
-
-/* =========================================================
-   POWER CONTROLLER
+   POWER CARD
    ========================================================= */
 
 .power-card {
@@ -692,25 +633,21 @@ footer {
     border: 1px solid var(--power-color);
     border-radius: 12px;
 
-    padding: 12px;
+    padding: 10px;
 
     text-align: center;
-
-    box-shadow:
-        0 0 18px rgba(34,211,238,0.06);
 }
 
 .power-icon {
 
-    font-size: calc(32 * var(--scale));
-    line-height: 1.2;
+    font-size: calc(28 * var(--scale));
 }
 
 .power-name {
 
     color: var(--power-color);
 
-    font-size: calc(23 * var(--scale));
+    font-size: calc(22 * var(--scale));
     font-weight: 900;
 
     letter-spacing: 2px;
@@ -730,7 +667,6 @@ footer {
     color: #CBD5E1;
 
     font-size: calc(12 * var(--scale));
-    line-height: 1.4;
 }
 
 .power-value {
@@ -740,7 +676,7 @@ footer {
     font-size: calc(28 * var(--scale));
     font-weight: 900;
 
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .power-caption {
@@ -758,17 +694,17 @@ footer {
 
 .stButton {
 
-    padding: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
 }
 
 .stButton > button {
 
     width: 100%;
 
-    min-height: calc(37 * var(--scale)) !important;
+    min-height: calc(35 * var(--scale)) !important;
 
-    padding: 5px 10px !important;
+    padding: 4px 10px !important;
 
     background: #101827;
 
@@ -783,7 +719,6 @@ footer {
 .stButton > button p {
 
     font-size: calc(12 * var(--scale));
-
     line-height: 1.2;
 
     margin: 0;
@@ -805,7 +740,7 @@ footer {
 
     background: linear-gradient(
         135deg,
-        #0E7490,
+        #0891B2,
         #155E75
     );
 
@@ -821,7 +756,7 @@ footer {
 
 .st-key-jump_button button {
 
-    min-height: calc(50 * var(--scale)) !important;
+    min-height: calc(45 * var(--scale)) !important;
 
     background: linear-gradient(
         135deg,
@@ -837,7 +772,7 @@ footer {
 
 .st-key-jump_button button p {
 
-    font-size: calc(17 * var(--scale));
+    font-size: calc(16 * var(--scale));
 
     letter-spacing: 2px;
 }
@@ -849,20 +784,14 @@ footer {
     color: #E2E8F0;
 }
 
-[data-testid="stSlider"] {
-
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
 [data-testid="stRadio"] {
-
-    padding: 4px 8px;
 
     background: #101827;
 
     border: 1px solid #29384C;
     border-radius: 9px;
+
+    padding: 5px 8px;
 }
 
 [data-testid="stRadio"] p {
@@ -872,7 +801,7 @@ footer {
 
 
 /* =========================================================
-   LIVE GAME HINT
+   HINT
    ========================================================= */
 
 .hint-box {
@@ -890,13 +819,12 @@ footer {
 
     border-radius: 10px;
 
-    padding: 10px 12px;
+    padding: 9px 12px;
 }
 
 .hint-icon {
 
     font-size: calc(25 * var(--scale));
-    flex-shrink: 0;
 }
 
 .hint-title {
@@ -904,7 +832,6 @@ footer {
     color: var(--hint-color);
 
     font-size: calc(13 * var(--scale));
-
     font-weight: 900;
 
     margin-bottom: 3px;
@@ -920,7 +847,7 @@ footer {
 
 
 /* =========================================================
-   PRACTICE PREVIEW
+   PREVIEW
    ========================================================= */
 
 .preview-grid {
@@ -939,7 +866,7 @@ footer {
     border: 1px solid #29384C;
     border-radius: 8px;
 
-    padding: 6px;
+    padding: 5px;
 
     text-align: center;
 }
@@ -968,20 +895,26 @@ footer {
 
     margin-top: auto !important;
 
-    padding-top: 7px;
+    padding-top: 6px;
 
     border-top: 1px solid #29384C;
 }
 
 
 /* =========================================================
-   POPUP DIALOGS
+   IFRAME
    ========================================================= */
 
-[data-testid="stDialog"] {
+iframe {
 
-    overflow: hidden !important;
+    border: none !important;
+    display: block !important;
 }
+
+
+/* =========================================================
+   POPUPS
+   ========================================================= */
 
 [data-testid="stDialog"] [role="dialog"] {
 
@@ -1009,14 +942,12 @@ footer {
 [data-testid="stDialog"]
 [data-testid="stVerticalBlock"] {
 
-    gap: 7px !important;
+    gap: 6px !important;
 }
 
 [data-testid="stDialog"] h2 {
 
-    font-size: calc(22 * var(--scale));
-
-    margin: 0;
+    font-size: calc(21 * var(--scale));
 }
 
 
@@ -1031,15 +962,14 @@ footer {
     border: 2px solid var(--result-color);
     border-radius: 15px;
 
-    padding: 18px;
+    padding: 16px;
 
     text-align: center;
 }
 
 .result-icon {
 
-    font-size: clamp(40px,10dvh,85px);
-
+    font-size: clamp(40px,9dvh,75px);
     line-height: 1.1;
 }
 
@@ -1047,12 +977,12 @@ footer {
 
     color: var(--result-color);
 
-    font-size: clamp(28px,6dvh,55px);
+    font-size: clamp(28px,6dvh,52px);
 
     font-weight: 900;
     letter-spacing: 3px;
 
-    margin: 8px 0;
+    margin: 6px 0;
 
     text-shadow:
         0 0 20px var(--result-color);
@@ -1062,20 +992,20 @@ footer {
 
     color: #FBBF24;
 
-    font-size: clamp(24px,5dvh,45px);
+    font-size: clamp(24px,5dvh,40px);
 
-    letter-spacing: 10px;
+    letter-spacing: 8px;
 
-    margin: 8px 0;
+    margin: 6px 0;
 }
 
 .result-subtitle {
 
     color: #CBD5E1;
 
-    font-size: calc(15 * var(--scale));
+    font-size: calc(14 * var(--scale));
 
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .result-explanation {
@@ -1085,27 +1015,16 @@ footer {
     border: 1px solid #29384C;
     border-radius: 10px;
 
-    padding: 12px;
+    padding: 10px;
 
-    margin-top: 12px;
+    margin-top: 10px;
 
     text-align: left;
 }
 
-.result-explanation-title {
-
-    color: var(--result-color);
-
-    font-size: calc(15 * var(--scale));
-
-    font-weight: 900;
-
-    margin-bottom: 5px;
-}
-
 
 /* =========================================================
-   STATIC TABLES
+   TABLES
    ========================================================= */
 
 .game-table {
@@ -1129,7 +1048,7 @@ footer {
 
     background: #1E293B;
 
-    padding: 7px 4px;
+    padding: 6px 4px;
 
     border: 1px solid #334155;
 
@@ -1140,7 +1059,7 @@ footer {
 
 .game-table td {
 
-    padding: 7px 4px;
+    padding: 6px 4px;
 
     border: 1px solid #29384C;
 
@@ -1156,21 +1075,21 @@ footer {
     border: 1px solid #29384C;
     border-radius: 10px;
 
-    padding: 12px;
+    padding: 10px;
 
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 
 /* =========================================================
-   SHORT LAPTOP SCREENS
+   RESPONSIVE DESKTOP
    ========================================================= */
 
 @media (max-height: 800px) {
 
     .block-container {
 
-        padding: 6px 18px 8px !important;
+        padding: 6px 15px !important;
     }
 
     [data-testid="stVerticalBlock"] {
@@ -1180,22 +1099,7 @@ footer {
 
     .hero-title {
 
-        font-size: 32px;
-    }
-
-    .arena svg {
-
-        height: 39dvh;
-    }
-
-    .practice-arena svg {
-
-        height: 32dvh;
-    }
-
-    .welcome-arena svg {
-
-        height: 20dvh;
+        font-size: 30px;
     }
 
     .game-card,
@@ -1212,22 +1116,22 @@ footer {
 
     .stat-value {
 
-        font-size: 27px;
+        font-size: 25px;
     }
 
     .power-icon {
 
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .stButton > button {
 
-        min-height: 30px !important;
+        min-height: 29px !important;
     }
 
     .st-key-jump_button button {
 
-        min-height: 40px !important;
+        min-height: 38px !important;
     }
 
     .instruction-card,
@@ -1237,7 +1141,7 @@ footer {
     }
 }
 
-@media (max-height: 650px) {
+@media (max-height: 680px) {
 
     :root {
 
@@ -1253,26 +1157,6 @@ footer {
     .hero-subtitle {
 
         font-size: 8px;
-    }
-
-    .arena svg {
-
-        height: 33dvh;
-    }
-
-    .practice-arena svg {
-
-        height: 26dvh;
-    }
-
-    .welcome-arena svg {
-
-        height: 17dvh;
-    }
-
-    .power-card {
-
-        padding: 5px 8px;
     }
 
     .power-icon {
@@ -1293,26 +1177,7 @@ footer {
 
     .result-box {
 
-        padding: 10px;
-    }
-}
-
-@media (max-width: 1100px) {
-
-    .block-container {
-
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
-
-    .stats-grid {
-
-        gap: 5px;
-    }
-
-    .stat-value {
-
-        font-size: 23px;
+        padding: 8px;
     }
 }
 
@@ -1462,15 +1327,20 @@ def current_power():
 def remaining_distance():
 
     return abs(
-        GLOBAL_OPTIMUM - display_position()
+
+        GLOBAL_OPTIMUM
+        - display_position()
     )
 
 
 def moves_left():
 
     return max(
+
         0,
-        MAX_GENERATIONS - S.generation
+
+        MAX_GENERATIONS
+        - S.generation
     )
 
 
@@ -1480,11 +1350,17 @@ def get_stars():
 
         return 0
 
-    if S.generation <= 10:
+    if (
+        S.lives == 3
+        and S.generation <= 10
+    ):
 
         return 3
 
-    if S.generation <= 20:
+    if (
+        S.lives >= 2
+        and S.generation <= 20
+    ):
 
         return 2
 
@@ -1512,11 +1388,17 @@ def reset_game():
         )
 
     S.settings = (
+
         strategy,
+
         initial_sigma
     )
 
     S.generation = 0
+
+    S.lives = MAX_LIVES
+
+    S.overshoot_count = 0
 
     S.population = [
 
@@ -1539,8 +1421,11 @@ def reset_game():
     ).normal(
 
         size=(
+
             MAX_GENERATIONS,
+
             2,
+
             POPULATION_SIZE
         )
     )
@@ -1560,9 +1445,12 @@ def reset_game():
 
     S.last_mutations = []
 
+    S.last_overshoot = None
+
     S.last_success_rate = None
 
     S.last_sigma_before = initial_sigma
+
     S.last_sigma_after = initial_sigma
 
     S.active_dialog = None
@@ -1572,14 +1460,17 @@ def reset_game():
     S.hint_title = "YOUR ADVENTURE BEGINS!"
 
     S.hint_text = (
-        "Escape the small mountain "
-        "and reach the golden flag at 79."
+
+        "Reach the golden flag at 79. "
+        "You have three lives!"
     )
 
     S.hint_color = "#22D3EE"
+
     S.hint_icon = "🧭"
 
     S.power_feedback = (
+
         "Your power is ready."
     )
 
@@ -1595,6 +1486,8 @@ def reset_game():
             ),
 
             "Sigma": initial_sigma,
+
+            "Lives": MAX_LIVES,
 
             "Distance": (
                 GLOBAL_OPTIMUM
@@ -1614,7 +1507,7 @@ if "population" not in S:
 
 
 # ============================================================
-# 09. GAME NAVIGATION
+# 09. NAVIGATION
 # ============================================================
 
 def open_setup(mode):
@@ -1625,15 +1518,11 @@ def open_setup(mode):
 
     S.active_dialog = None
 
-    if mode == "Practice":
+    S["_strategy"] = S.strategy
 
-        S.manual_power = 20.0
+    S["_initial_power"] = S.initial_power
 
-    else:
-
-        S.strategy = "Deterministic"
-
-        S.initial_power = 15
+    S["_manual_power"] = S.manual_power
 
 
 def start_game():
@@ -1648,14 +1537,6 @@ def go_home():
     S.screen = "menu"
 
     S.active_dialog = None
-
-
-def change_power():
-
-    S.initial_power = int(
-
-        POWERS[S.strategy]["default"]
-    )
 
 
 def restart_game():
@@ -1678,7 +1559,56 @@ def close_dialog():
 
 
 # ============================================================
-# 10. MUTATION ENGINE
+# 10. WIDGET STATE MANAGEMENT
+# ============================================================
+
+# Permanent values and widget values use different keys.
+# This prevents Streamlit from deleting game settings
+# when the player changes screens.
+
+
+def sync_strategy():
+
+    S.strategy = S["_strategy"]
+
+
+def sync_initial_power():
+
+    S.initial_power = int(
+        S["_initial_power"]
+    )
+
+
+def sync_manual_power():
+
+    S.manual_power = float(
+        S["_manual_power"]
+    )
+
+
+def set_initial_power(value):
+
+    S.initial_power = int(value)
+
+    S["_initial_power"] = int(value)
+
+
+def set_manual_power(value):
+
+    S.manual_power = float(value)
+
+    S["_manual_power"] = float(value)
+
+
+def prepare_widget(key, value):
+
+    if key not in S:
+
+        S[key] = value
+
+
+# ============================================================
+# 11. MUTATION ENGINE
 # ============================================================
 
 def generate_mutations():
@@ -1699,9 +1629,10 @@ def generate_mutations():
 
     mutations = []
 
-    for i, (position, individual_sigma) in enumerate(
-        S.population
-    ):
+    for i, (
+        position,
+        individual_sigma
+    ) in enumerate(S.population):
 
         position = int(position)
 
@@ -1738,7 +1669,7 @@ def generate_mutations():
             )
 
         # ----------------------------------------------------
-        # DETERMINISTIC / ADAPTIVE
+        # DETERMINISTIC AND ADAPTIVE
         # ----------------------------------------------------
 
         else:
@@ -1748,15 +1679,17 @@ def generate_mutations():
             )
 
         # Gaussian mutation.
-        # Movement may be positive or negative.
+        # Movement can be positive or negative.
 
         movement = (
-            child_sigma * draws[1, i]
+
+            child_sigma
+
+            * draws[1, i]
         )
 
-        # Round to integer positions.
-        # Do not clamp to 79.
-        # Overshooting must remain possible.
+        # Positions are integers.
+        # Overshoot beyond 79 is allowed.
 
         child_position = int(
 
@@ -1781,7 +1714,9 @@ def generate_mutations():
         )
 
         improved = (
-            child_score > parent_score
+
+            child_score
+            > parent_score
         )
 
         if child_position > GLOBAL_OPTIMUM:
@@ -1811,7 +1746,9 @@ def generate_mutations():
             "sigma": child_sigma,
 
             "movement": (
-                child_position - position
+
+                child_position
+                - position
             ),
 
             "parent_score": parent_score,
@@ -1827,10 +1764,13 @@ def generate_mutations():
 
 
 # ============================================================
-# 11. SAVE PERFORMANCE HISTORY
+# 12. PERFORMANCE HISTORY
 # ============================================================
 
-def save_history(action, success_rate=None):
+def save_history(
+    action,
+    success_rate=None
+):
 
     position = display_position()
 
@@ -1846,8 +1786,12 @@ def save_history(action, success_rate=None):
 
         "Sigma": current_power(),
 
+        "Lives": S.lives,
+
         "Distance": abs(
-            GLOBAL_OPTIMUM - position
+
+            GLOBAL_OPTIMUM
+            - position
         ),
 
         "Success Rate": success_rate,
@@ -1857,7 +1801,7 @@ def save_history(action, success_rate=None):
 
 
 # ============================================================
-# 12. MISSION RESULT ENGINE
+# 13. MISSION RESULT ENGINE
 # ============================================================
 
 def finish_game(
@@ -1905,12 +1849,11 @@ def finish_game(
 
     if won:
 
-        S.hint_title = (
-            "PERFECT LANDING!"
-        )
+        S.hint_title = "PERFECT LANDING!"
 
         S.hint_text = (
-            "You reached the highest peak!"
+
+            "You reached exactly position 79!"
         )
 
         S.hint_icon = "🏆"
@@ -1942,7 +1885,9 @@ def finish_game(
             )
 
             if (
+
                 previous is None
+
                 or S.generation < previous
             ):
 
@@ -1954,35 +1899,32 @@ def finish_game(
 
     else:
 
-        S.hint_title = (
-            "MISSION FAILED!"
-        )
+        S.hint_title = "MISSION FAILED!"
+
+        S.hint_icon = "💥"
 
         S.hint_color = "#F87171"
 
-        S.hint_icon = "⚠️"
-
-        if failure_type == "OVERSHOOT":
+        if failure_type == "NO_LIVES":
 
             S.hint_text = (
 
-                f"Climber {S.trigger_individual} "
-                f"landed at {S.final_position}. "
-                "The golden flag was at 79."
+                "All three lives have been lost."
             )
 
         else:
 
             S.hint_text = (
-                "You ran out of moves "
-                "before reaching the golden flag."
+
+                "You ran out of moves before "
+                "reaching the golden flag."
             )
 
     S.active_dialog = "result"
 
 
 # ============================================================
-# 13. SHORT GAME HINTS
+# 14. GAME HINTS
 # ============================================================
 
 def update_hint(previous_position):
@@ -1990,7 +1932,9 @@ def update_hint(previous_position):
     position = best_position()
 
     distance = (
-        GLOBAL_OPTIMUM - position
+
+        GLOBAL_OPTIMUM
+        - position
     )
 
     if position >= 73:
@@ -2000,43 +1944,47 @@ def update_hint(previous_position):
         S.hint_text = (
 
             f"Only {distance} units left. "
-            "Smaller jumps can improve precision."
+            "Smaller jumps improve precision."
         )
 
-        S.hint_color = "#4ADE80"
-
         S.hint_icon = "🎯"
+
+        S.hint_color = "#4ADE80"
 
     elif position >= 60:
 
         S.hint_title = "THE FINAL CLIMB!"
 
         S.hint_text = (
-            "You're getting closer. "
-            "Watch out for overshooting!"
-        )
 
-        S.hint_color = "#FBBF24"
+            "You're getting closer. "
+            "Watch out for the danger zone!"
+        )
 
         S.hint_icon = "🚩"
 
+        S.hint_color = "#FBBF24"
+
     elif (
+
         abs(position - LOCAL_OPTIMUM) <= 5
+
         and position == previous_position
     ):
 
-        S.hint_title = "TRAPPED AT THE SMALL PEAK!"
+        S.hint_title = "STUCK AT THE SMALL PEAK!"
 
         S.hint_text = (
-            "Your team needs enough jump power "
-            "to explore beyond this mountain."
-        )
 
-        S.hint_color = "#FBBF24"
+            "Your team needs wider exploration "
+            "to escape this mountain."
+        )
 
         S.hint_icon = "⛰️"
 
-    elif position > previous_position:
+        S.hint_color = "#FBBF24"
+
+    elif position != previous_position:
 
         S.hint_title = "GREAT MOVE!"
 
@@ -2047,107 +1995,37 @@ def update_hint(previous_position):
             f"to {position}."
         )
 
-        S.hint_color = "#4ADE80"
-
         S.hint_icon = "⚡"
+
+        S.hint_color = "#4ADE80"
 
     else:
 
         S.hint_title = "KEEP EXPLORING!"
 
         S.hint_text = (
-            "Your team kept its strongest climbers. "
+
+            "Your strongest climbers survived. "
             "Try the next jump."
         )
 
-        S.hint_color = "#22D3EE"
-
         S.hint_icon = "🧭"
 
+        S.hint_color = "#22D3EE"
+
 
 # ============================================================
-# 14. MAIN EVOLUTION ENGINE
+# 15. PARAMETER CONTROL ENGINE
 # ============================================================
 
-def jump():
-
-    if S.finished:
-
-        return
-
-    if S.generation >= MAX_GENERATIONS:
-
-        return
-
-    strategy, initial_sigma = S.settings
-
-    mutations = generate_mutations()
-
-    if not mutations:
-
-        return
-
-    previous_position = best_position()
-
-    old_sigma = current_power()
-
-    S.previous_position = previous_position
-
-    offspring = [
-
-        (
-            mutation["position"],
-            mutation["sigma"]
-        )
-
-        for mutation in mutations
-    ]
-
-    successful_mutations = sum(
-
-        mutation["improved"]
-
-        for mutation in mutations
-    )
-
-    success_rate = (
-
-        successful_mutations
-        / POPULATION_SIZE
-    )
-
-    S.last_success_rate = success_rate
-
-    S.last_mutations = mutations
-
-    S.generation += 1
-
-    # --------------------------------------------------------
-    # A. FITNESS-BASED SURVIVAL SELECTION
-    # --------------------------------------------------------
-
-    combined = (
-
-        list(S.population)
-        + offspring
-    )
-
-    combined.sort(
-
-        key=lambda item: float(
-            fitness(item[0])
-        ),
-
-        reverse=True
-    )
-
-    new_population = combined[
-        :POPULATION_SIZE
-    ]
-
-    # --------------------------------------------------------
-    # B. PARAMETER CONTROL
-    # --------------------------------------------------------
+def update_parameter_control(
+    strategy,
+    initial_sigma,
+    old_sigma,
+    success_rate,
+    successful_mutations,
+    population
+):
 
     if strategy == "Manual":
 
@@ -2155,15 +2033,16 @@ def jump():
             S.manual_power
         )
 
-        S.power_feedback = (
+        feedback = (
 
-            f"Manual power: "
+            f"Manual jump power: "
             f"{new_sigma:.1f}"
         )
 
     elif strategy == "Deterministic":
 
-        # Predefined linear schedule.
+        # Fixed linear schedule.
+        # Independent of performance.
 
         new_sigma = max(
 
@@ -2172,16 +2051,18 @@ def jump():
             initial_sigma * (
 
                 1 - (
+
                     S.generation
+
                     / MAX_GENERATIONS
                 )
             )
         )
 
-        S.power_feedback = (
+        feedback = (
 
-            f"TIME power: "
-            f"{old_sigma:.1f} → {new_sigma:.1f}. "
+            f"TIME: {old_sigma:.1f} "
+            f"→ {new_sigma:.1f}. "
             "Power decreases with time."
         )
 
@@ -2217,7 +2098,7 @@ def jump():
 
             change = "stayed the same"
 
-        S.power_feedback = (
+        feedback = (
 
             f"{successful_mutations}/5 "
             f"climbers improved. "
@@ -2226,17 +2107,287 @@ def jump():
 
     else:
 
-        # Self-adaptive sigma belongs
-        # to each surviving individual.
+        # Sigma evolves together with individuals.
+
+        strongest = max(
+
+            population,
+
+            key=lambda item: float(
+                fitness(item[0])
+            )
+        )
 
         new_sigma = float(
-            new_population[0][1]
+            strongest[1]
         )
 
-        S.power_feedback = (
-            "EVOLVE power: the strongest "
-            "climbers pass on their jump power."
+        feedback = (
+
+            "EVOLVE: surviving climbers "
+            "keep their individual jump powers."
         )
+
+    return float(new_sigma), feedback
+
+
+# ============================================================
+# 16. MAIN EVOLUTION ENGINE
+# ============================================================
+
+def jump():
+
+    if S.finished:
+
+        return
+
+    if S.generation >= MAX_GENERATIONS:
+
+        return
+
+    strategy, initial_sigma = S.settings
+
+    mutations = generate_mutations()
+
+    if not mutations:
+
+        return
+
+    previous_position = best_position()
+
+    old_sigma = current_power()
+
+    S.previous_position = previous_position
+
+    S.last_mutations = mutations
+
+    S.last_overshoot = None
+
+    S.last_sigma_before = old_sigma
+
+    S.generation += 1
+
+    # --------------------------------------------------------
+    # A. CHECK OVERSHOOT
+    # --------------------------------------------------------
+
+    overshoots = [
+
+        mutation
+
+        for mutation in mutations
+
+        if mutation["position"] > GLOBAL_OPTIMUM
+    ]
+
+    exact_hits = [
+
+        mutation
+
+        for mutation in mutations
+
+        if mutation["position"] == GLOBAL_OPTIMUM
+    ]
+
+    # --------------------------------------------------------
+    # B. OVERSHOOT PENALTY
+    # --------------------------------------------------------
+
+    if overshoots:
+
+        # One life is lost per rejected generation,
+        # regardless of the number of overshooting climbers.
+
+        S.lives = max(
+
+            0,
+
+            S.lives - 1
+        )
+
+        S.overshoot_count += 1
+
+        trigger = max(
+
+            overshoots,
+
+            key=lambda item: item["position"]
+        )
+
+        S.last_overshoot = trigger
+
+        # Reject all offspring.
+        # Keep the previous population.
+
+        population = list(
+            S.population
+        )
+
+        # A rejected generation has zero accepted
+        # successful mutations for Adaptive Control.
+
+        success_rate = 0.0
+
+        successful_mutations = 0
+
+        S.last_success_rate = success_rate
+
+        new_sigma, feedback = (
+
+            update_parameter_control(
+
+                strategy,
+
+                initial_sigma,
+
+                old_sigma,
+
+                success_rate,
+
+                successful_mutations,
+
+                population
+            )
+        )
+
+        if strategy != "Self-Adaptive":
+
+            population = [
+
+                (
+                    int(position),
+                    new_sigma
+                )
+
+                for position, _ in population
+            ]
+
+        S.population = population
+
+        S.sigma = new_sigma
+
+        S.last_sigma_after = new_sigma
+
+        S.power_feedback = feedback
+
+        S.hint_title = "OVERSHOOT! LIFE LOST!"
+
+        S.hint_text = (
+
+            f"Climber {trigger['individual']} "
+            f"landed at {trigger['position']}. "
+            f"{S.lives} lives remaining. "
+            "Your previous position is restored."
+        )
+
+        S.hint_color = "#F87171"
+
+        S.hint_icon = "💔"
+
+        if S.lives == 0:
+
+            finish_game(
+
+                won=False,
+
+                failure_type="NO_LIVES",
+
+                trigger=trigger
+            )
+
+        elif S.generation >= MAX_GENERATIONS:
+
+            finish_game(
+
+                won=False,
+
+                failure_type="OUT_OF_MOVES"
+            )
+
+        save_history(
+
+            action="Overshoot",
+
+            success_rate=success_rate
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # C. NORMAL MUTATION SUCCESS RATE
+    # --------------------------------------------------------
+
+    successful_mutations = sum(
+
+        mutation["improved"]
+
+        for mutation in mutations
+    )
+
+    success_rate = (
+
+        successful_mutations
+
+        / POPULATION_SIZE
+    )
+
+    S.last_success_rate = success_rate
+
+    # --------------------------------------------------------
+    # D. FITNESS-BASED SURVIVAL SELECTION
+    # --------------------------------------------------------
+
+    offspring = [
+
+        (
+            mutation["position"],
+            mutation["sigma"]
+        )
+
+        for mutation in mutations
+    ]
+
+    combined = (
+
+        list(S.population)
+
+        + offspring
+    )
+
+    combined.sort(
+
+        key=lambda item: float(
+            fitness(item[0])
+        ),
+
+        reverse=True
+    )
+
+    new_population = combined[
+        :POPULATION_SIZE
+    ]
+
+    # --------------------------------------------------------
+    # E. PARAMETER CONTROL
+    # --------------------------------------------------------
+
+    new_sigma, feedback = (
+
+        update_parameter_control(
+
+            strategy,
+
+            initial_sigma,
+
+            old_sigma,
+
+            success_rate,
+
+            successful_mutations,
+
+            new_population
+        )
+    )
 
     if strategy != "Self-Adaptive":
 
@@ -2244,7 +2395,7 @@ def jump():
 
             (
                 int(position),
-                float(new_sigma)
+                new_sigma
             )
 
             for position, _ in new_population
@@ -2254,53 +2405,15 @@ def jump():
 
     S.sigma = new_sigma
 
-    S.last_sigma_before = old_sigma
-
     S.last_sigma_after = new_sigma
 
+    S.power_feedback = feedback
+
     # --------------------------------------------------------
-    # C. STRICT GAME RULES
+    # F. MISSION STATUS
     # --------------------------------------------------------
 
-    overshoots = [
-
-        mutation
-
-        for mutation in mutations
-
-        if (
-            mutation["position"]
-            > GLOBAL_OPTIMUM
-        )
-    ]
-
-    exact_hits = [
-
-        mutation
-
-        for mutation in mutations
-
-        if (
-            mutation["position"]
-            == GLOBAL_OPTIMUM
-        )
-    ]
-
-    # Overshoot has priority.
-    # Any offspring above 79 fails the mission.
-
-    if overshoots:
-
-        finish_game(
-
-            won=False,
-
-            failure_type="OVERSHOOT",
-
-            trigger=overshoots[0]
-        )
-
-    elif exact_hits:
+    if exact_hits:
 
         finish_game(
 
@@ -2315,7 +2428,7 @@ def jump():
 
             won=False,
 
-            failure_type="UNDERSHOOT"
+            failure_type="OUT_OF_MOVES"
         )
 
     else:
@@ -2333,7 +2446,7 @@ def jump():
 
 
 # ============================================================
-# 15. PRACTICE RETRY
+# 17. PRACTICE RETRY
 # ============================================================
 
 def retry_move():
@@ -2354,6 +2467,8 @@ def retry_move():
 
     S.last_mutations = []
 
+    S.last_overshoot = None
+
     S.last_success_rate = None
 
     S.previous_position = best_position()
@@ -2361,8 +2476,9 @@ def retry_move():
     S.hint_title = "NEW MOVE AVAILABLE!"
 
     S.hint_text = (
-        "You rejected the previous jump. "
-        "One move has been used."
+
+        "You skipped the previous jump. "
+        "One move was used, but no life was lost."
     )
 
     S.hint_icon = "🔄"
@@ -2375,7 +2491,7 @@ def retry_move():
 
             won=False,
 
-            failure_type="UNDERSHOOT"
+            failure_type="OUT_OF_MOVES"
         )
 
     save_history(
@@ -2387,21 +2503,7 @@ def retry_move():
 
 
 # ============================================================
-# 16. MANUAL POWER PRESETS
-# ============================================================
-
-def set_manual_power(value):
-
-    S.manual_power = float(value)
-
-
-def set_initial_power(value):
-
-    S.initial_power = int(value)
-
-
-# ============================================================
-# 17. HTML HELPERS
+# 18. HTML HELPERS
 # ============================================================
 
 def section_title(text):
@@ -2460,7 +2562,7 @@ def static_table(dataframe):
 
 
 # ============================================================
-# 18. HEADER
+# 19. GAME HEADER
 # ============================================================
 
 def display_header(show_mode=False):
@@ -2509,7 +2611,64 @@ def display_header(show_mode=False):
 
 
 # ============================================================
-# 19. SVG MOUNTAIN GAME ARENA
+# 20. LIVES DISPLAY
+# ============================================================
+
+def display_lives():
+
+    hearts = ""
+
+    for i in range(MAX_LIVES):
+
+        css_class = (
+
+            "heart-active"
+
+            if i < S.lives
+
+            else "heart-lost"
+        )
+
+        hearts += f"""
+
+        <span class="{css_class}">
+
+            ♥
+
+        </span>
+
+        """
+
+    st.html(f"""
+
+    <div class="lives-panel">
+
+        <div class="lives-title">
+
+            YOUR LIVES
+
+        </div>
+
+        <div class="hearts">
+
+            {hearts}
+
+        </div>
+
+        <div class="lives-caption">
+
+            {S.lives} / {MAX_LIVES}
+            lives remaining
+
+        </div>
+
+    </div>
+
+    """)
+
+
+# ============================================================
+# 21. MOUNTAIN SVG
 # ============================================================
 
 def create_mountain_svg(
@@ -2518,9 +2677,11 @@ def create_mountain_svg(
 ):
 
     width = 1000
+
     height = 370
 
     left = 45
+
     right = 955
 
     bottom = 325
@@ -2531,9 +2692,7 @@ def create_mountain_svg(
 
             left
 
-            + (
-                float(position) / 100
-            )
+            + float(position) / 100
 
             * (right - left)
         )
@@ -2550,8 +2709,11 @@ def create_mountain_svg(
         )
 
     points = np.linspace(
+
         0,
+
         100,
+
         501
     )
 
@@ -2597,18 +2759,16 @@ def create_mountain_svg(
 
     grid = ""
 
-    for y in range(55, 326, 45):
+    for y in range(55,326,45):
 
         grid += f"""
 
         <line
 
             x1="{left}"
-
             y1="{y}"
 
             x2="{right}"
-
             y2="{y}"
 
             stroke="#1E293B"
@@ -2622,7 +2782,7 @@ def create_mountain_svg(
         """
 
     # --------------------------------------------------------
-    # AXIS LABELS
+    # POSITION LABELS
     # --------------------------------------------------------
 
     labels = ""
@@ -2630,6 +2790,7 @@ def create_mountain_svg(
     for x in [
 
         0, 10, 20, 30, 40,
+
         50, 60, 70, 79, 90, 100
     ]:
 
@@ -2647,7 +2808,6 @@ def create_mountain_svg(
         <text
 
             x="{sx(x)}"
-
             y="347"
 
             fill="{color}"
@@ -2667,7 +2827,7 @@ def create_mountain_svg(
         """
 
     # --------------------------------------------------------
-    # CLIMBERS
+    # POPULATION
     # --------------------------------------------------------
 
     climbers = ""
@@ -2676,9 +2836,7 @@ def create_mountain_svg(
 
         position_counts = {}
 
-        for i, (position, _) in enumerate(
-            S.population
-        ):
+        for position, _ in S.population:
 
             position_counts[position] = (
 
@@ -2739,33 +2897,32 @@ def create_mountain_svg(
                 """
 
     # --------------------------------------------------------
-    # LAST JUMP TRAIL
+    # JUMP TRAIL
     # --------------------------------------------------------
 
     trails = ""
 
-    if (
-        not welcome
-        and S.last_mutations
-    ):
+    if not welcome and S.last_mutations:
 
-        if (
-            S.finished
-            and S.trigger_parent is not None
-        ):
+        if S.last_overshoot is not None:
+
+            parent = S.last_overshoot[
+                "parent"
+            ]
+
+            child = S.last_overshoot[
+                "position"
+            ]
+
+            color = "#F87171"
+
+        elif S.finished and S.won:
 
             parent = S.trigger_parent
 
-            child = display_position()
+            child = GLOBAL_OPTIMUM
 
-            color = (
-
-                "#4ADE80"
-
-                if S.won
-
-                else "#F87171"
-            )
+            color = "#4ADE80"
 
         else:
 
@@ -2775,7 +2932,7 @@ def create_mountain_svg(
 
             color = "#22D3EE"
 
-        if parent != child:
+        if parent is not None and parent != child:
 
             x1 = sx(parent)
 
@@ -2786,6 +2943,7 @@ def create_mountain_svg(
             y2 = sy(child)
 
             middle_x = (
+
                 x1 + x2
             ) / 2
 
@@ -2793,7 +2951,16 @@ def create_mountain_svg(
 
                 12,
 
-                min(y1, y2) - 85
+                min(y1,y2) - 85
+            )
+
+            jump_path = (
+
+                f"M {x1} {y1} "
+
+                f"Q {middle_x} {middle_y} "
+
+                f"{x2} {y2}"
             )
 
             trails = f"""
@@ -2802,9 +2969,7 @@ def create_mountain_svg(
 
                 class="jump-trail"
 
-                d="M {x1} {y1}
-                   Q {middle_x} {middle_y}
-                     {x2} {y2}"
+                d="{jump_path}"
 
                 fill="none"
 
@@ -2826,15 +2991,13 @@ def create_mountain_svg(
 
                 <animateMotion
 
-                    dur="0.65s"
+                    dur="0.7s"
 
                     repeatCount="1"
 
                     fill="freeze"
 
-                    path="M {x1} {y1}
-                          Q {middle_x} {middle_y}
-                            {x2} {y2}"
+                    path="{jump_path}"
 
                 />
 
@@ -2843,20 +3006,93 @@ def create_mountain_svg(
             """
 
     # --------------------------------------------------------
-    # PRACTICE MUTATION PREVIEW
+    # OVERSHOOT MARKER
+    # --------------------------------------------------------
+
+    overshoot_marker = ""
+
+    if not welcome and S.last_overshoot is not None:
+
+        failed_position = S.last_overshoot[
+            "position"
+        ]
+
+        ox = sx(failed_position)
+
+        oy = sy(failed_position)
+
+        overshoot_marker = f"""
+
+        <circle
+
+            cx="{ox}"
+
+            cy="{oy}"
+
+            r="15"
+
+            fill="#F87171"
+
+            opacity="0.15"
+
+        />
+
+        <path
+
+            d="M {ox-7} {oy-7}
+
+               L {ox+7} {oy+7}
+
+               M {ox+7} {oy-7}
+
+               L {ox-7} {oy+7}"
+
+            stroke="#F87171"
+
+            stroke-width="4"
+
+            stroke-linecap="round"
+
+        />
+
+        <text
+
+            x="{min(900,max(100,ox))}"
+
+            y="{oy-25}"
+
+            fill="#F87171"
+
+            font-size="14"
+
+            font-weight="900"
+
+            text-anchor="middle"
+
+        >
+
+            OVERSHOOT · {failed_position}
+
+        </text>
+
+        """
+
+    # --------------------------------------------------------
+    # PRACTICE PREVIEW
     # --------------------------------------------------------
 
     preview_points = ""
 
     if (
+
         preview
+
         and not welcome
+
         and not S.finished
     ):
 
-        mutations = generate_mutations()
-
-        for mutation in mutations:
+        for mutation in generate_mutations():
 
             position = mutation["position"]
 
@@ -2904,27 +3140,25 @@ def create_mountain_svg(
 
         if welcome
 
-        else display_position()
+        else best_position()
     )
+
+    if not welcome and S.won:
+
+        position = GLOBAL_OPTIMUM
 
     cx = sx(position)
 
     cy = sy(position)
 
-    if not welcome and S.finished:
+    player_color = (
 
-        player_color = (
+        "#4ADE80"
 
-            "#4ADE80"
+        if not welcome and S.won
 
-            if S.won
-
-            else "#F87171"
-        )
-
-    else:
-
-        player_color = "#22D3EE"
+        else "#22D3EE"
+    )
 
     player_label = (
 
@@ -2936,17 +3170,18 @@ def create_mountain_svg(
     )
 
     label_x = min(
+
         880,
-        max(120, cx)
+
+        max(120,cx)
     )
 
     label_y = min(
+
         315,
+
         cy + 40
     )
-
-    # Draw a simple vector climber.
-    # No external image or asset required.
 
     player = f"""
 
@@ -2956,17 +3191,17 @@ def create_mountain_svg(
 
         cx="{cx}"
 
-        cy="{cy - 13}"
+        cy="{cy-13}"
 
         r="22"
 
         fill="{player_color}"
 
-        opacity="0.13"
+        opacity="0.16"
 
     />
 
-    <g transform="translate({cx},{cy - 20})">
+    <g transform="translate({cx},{cy-20})">
 
         <circle
 
@@ -2999,8 +3234,11 @@ def create_mountain_svg(
         <path
 
             d="M -4 0 L -13 7
+
                M 4 0 L 12 -5
+
                M -3 10 L -10 20
+
                M 3 10 L 9 20"
 
             stroke="#F8FAFC"
@@ -3033,9 +3271,9 @@ def create_mountain_svg(
 
     <rect
 
-        x="{label_x - 82}"
+        x="{label_x-82}"
 
-        y="{label_y - 15}"
+        y="{label_y-15}"
 
         width="164"
 
@@ -3046,8 +3284,6 @@ def create_mountain_svg(
         fill="#0F172A"
 
         stroke="{player_color}"
-
-        stroke-width="1"
 
     />
 
@@ -3074,10 +3310,10 @@ def create_mountain_svg(
     """
 
     # --------------------------------------------------------
-    # COMPLETE SVG
+    # COMPLETE MOUNTAIN SVG
     # --------------------------------------------------------
 
-    svg = f"""
+    return f"""
 
     <svg
 
@@ -3111,7 +3347,7 @@ def create_mountain_svg(
 
                     stop-color="#155E75"
 
-                    stop-opacity="0.85"
+                    stop-opacity="0.9"
 
                 />
 
@@ -3147,7 +3383,7 @@ def create_mountain_svg(
 
                     stop-color="#EF4444"
 
-                    stop-opacity="0.04"
+                    stop-opacity="0.06"
 
                 />
 
@@ -3157,7 +3393,7 @@ def create_mountain_svg(
 
                     stop-color="#EF4444"
 
-                    stop-opacity="0.18"
+                    stop-opacity="0.20"
 
                 />
 
@@ -3173,9 +3409,9 @@ def create_mountain_svg(
 
             y="20"
 
-            width="{right - sx(79.5)}"
+            width="{right-sx(79.5)}"
 
-            height="{bottom - 20}"
+            height="{bottom-20}"
 
             fill="url(#dangerFill)"
 
@@ -3217,7 +3453,7 @@ def create_mountain_svg(
 
             stroke-width="10"
 
-            opacity="0.07"
+            opacity="0.08"
 
             fill="none"
 
@@ -3247,8 +3483,6 @@ def create_mountain_svg(
 
             stroke="#334155"
 
-            stroke-width="1"
-
         />
 
         <circle
@@ -3267,7 +3501,7 @@ def create_mountain_svg(
 
             x="{local_x}"
 
-            y="{local_y - 40}"
+            y="{local_y-40}"
 
             fill="#CBD5E1"
 
@@ -3287,7 +3521,7 @@ def create_mountain_svg(
 
             x="{local_x}"
 
-            y="{local_y - 23}"
+            y="{local_y-23}"
 
             fill="#94A3B8"
 
@@ -3329,7 +3563,7 @@ def create_mountain_svg(
 
             x2="{target_x}"
 
-            y2="{target_y - 45}"
+            y2="{target_y-45}"
 
             stroke="#FBBF24"
 
@@ -3339,11 +3573,11 @@ def create_mountain_svg(
 
         <path
 
-            d="M {target_x} {target_y - 45}
+            d="M {target_x} {target_y-45}
 
-               L {target_x + 35} {target_y - 35}
+               L {target_x+35} {target_y-35}
 
-               L {target_x} {target_y - 23} Z"
+               L {target_x} {target_y-23} Z"
 
             fill="#FBBF24"
 
@@ -3351,9 +3585,9 @@ def create_mountain_svg(
 
         <text
 
-            x="{target_x - 12}"
+            x="{target_x-12}"
 
-            y="{target_y - 47}"
+            y="{target_y-47}"
 
             fill="#FBBF24"
 
@@ -3371,9 +3605,9 @@ def create_mountain_svg(
 
         <text
 
-            x="{target_x - 12}"
+            x="{target_x-12}"
 
-            y="{target_y - 30}"
+            y="{target_y-30}"
 
             fill="#FBBF24"
 
@@ -3392,6 +3626,8 @@ def create_mountain_svg(
         {climbers}
 
         {preview_points}
+
+        {overshoot_marker}
 
         {player}
 
@@ -3421,12 +3657,9 @@ def create_mountain_svg(
 
     """
 
-    return svg
-
-
 
 # ============================================================
-# 20. DISPLAY MOUNTAIN ARENA — FIXED
+# 22. MOUNTAIN ARENA — FIXED HTML IFRAME
 # ============================================================
 
 def display_arena(
@@ -3435,119 +3668,174 @@ def display_arena(
 ):
 
     svg = create_mountain_svg(
+
         welcome=welcome,
+
         preview=preview
     )
 
     if welcome:
-        arena_height = 220
+
+        arena_height = 190
 
     elif S.game_mode == "Practice":
-        arena_height = 280
+
+        arena_height = 270
 
     else:
-        arena_height = 360
+
+        arena_height = 340
 
     header = ""
 
     if not welcome:
 
         status = (
+
             "MISSION ENDED"
+
             if S.finished
+
             else "LIVE EXPEDITION"
         )
 
         header = f"""
+
         <div class="arena-top">
+
             <span>
+
                 <span class="live-dot"></span>
+
                 {status}
+
             </span>
 
-            <span>TARGET: 79</span>
+            <span>
+
+                TARGET: 79
+
+            </span>
+
         </div>
+
         """
 
     html_content = f"""
+
     <!DOCTYPE html>
+
     <html>
+
     <head>
+
+    <meta charset="UTF-8">
 
     <style>
 
         * {{
+
             box-sizing: border-box;
         }}
 
         html, body {{
+
             margin: 0;
+
             padding: 0;
+
             width: 100%;
+
             height: 100%;
+
             overflow: hidden;
+
             background: transparent;
+
             font-family: Arial, sans-serif;
         }}
 
         .arena {{
+
             width: 100%;
+
             height: 100%;
 
             display: flex;
+
             flex-direction: column;
 
             background: linear-gradient(
+
                 180deg,
+
                 #071322,
+
                 #080D1C
             );
 
             border: 1px solid #164E63;
+
             border-radius: 14px;
 
             overflow: hidden;
         }}
 
         .arena-top {{
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
 
             flex-shrink: 0;
 
-            padding: 10px 14px;
+            padding: 9px 14px;
 
             color: #67E8F9;
+
             font-size: 11px;
+
             font-weight: 800;
+
             letter-spacing: 1px;
 
             border-bottom: 1px solid #164E63;
         }}
 
         .mountain-wrapper {{
+
             flex: 1;
+
             min-height: 0;
+
             width: 100%;
+
             overflow: hidden;
         }}
 
         svg {{
+
             display: block;
+
             width: 100%;
+
             height: 100%;
         }}
 
         .live-dot {{
+
             display: inline-block;
 
             width: 8px;
+
             height: 8px;
 
             margin-right: 5px;
 
             background: #4ADE80;
+
             border-radius: 50%;
 
             box-shadow: 0 0 10px #4ADE80;
@@ -3556,26 +3844,34 @@ def display_arena(
         }}
 
         .climber-glow {{
+
             animation: pulse 2s infinite;
         }}
 
         .jump-trail {{
+
             stroke-dasharray: 8 7;
+
             animation: trail 1.2s linear infinite;
         }}
 
         @keyframes pulse {{
+
             0%, 100% {{
+
                 opacity: 1;
             }}
 
             50% {{
+
                 opacity: 0.35;
             }}
         }}
 
         @keyframes trail {{
+
             to {{
+
                 stroke-dashoffset: -30;
             }}
         }}
@@ -3591,23 +3887,31 @@ def display_arena(
             {header}
 
             <div class="mountain-wrapper">
+
                 {svg}
+
             </div>
 
         </div>
 
     </body>
+
     </html>
+
     """
 
     components.html(
+
         html_content,
+
         height=arena_height,
+
         scrolling=False
     )
 
+
 # ============================================================
-# 21. MAIN MENU
+# 23. MAIN MENU
 # ============================================================
 
 def display_menu():
@@ -3632,8 +3936,7 @@ def display_menu():
 
         <div class="mission-subtitle">
 
-            Lead your team to the highest peak
-            before you run out of moves.
+            5 climbers · 3 lives · 30 moves
 
         </div>
 
@@ -3655,8 +3958,8 @@ def display_menu():
 
                 <div class="instruction-text">
 
-                    Select how your team's
-                    jump power will change.
+                    Choose how your team's
+                    jump power changes.
 
                 </div>
 
@@ -3695,15 +3998,14 @@ def display_menu():
 
                 <div class="instruction-title">
 
-                    03 · HIT THE PEAK
+                    03 · HIT THE FLAG
 
                 </div>
 
                 <div class="instruction-text">
 
-                    Land exactly at 79
-                    within 30 moves.
-                    Never overshoot!
+                    Land exactly at 79.
+                    Overshoot costs one life.
 
                 </div>
 
@@ -3731,7 +4033,7 @@ def display_menu():
                 <div class="menu-text">
 
                     Control your own jump power
-                    and preview your next move.
+                    and preview each landing.
 
                 </div>
 
@@ -3769,7 +4071,7 @@ def display_menu():
 
                 <div class="menu-text">
 
-                    Master all three powers.
+                    Master the three powers.
 
                     <br>
 
@@ -3799,7 +4101,7 @@ def display_menu():
 
 
 # ============================================================
-# 22. POWER CARD
+# 24. POWER CARD
 # ============================================================
 
 def display_power_card(
@@ -3834,7 +4136,9 @@ def display_power_card(
     <div class="power-card"
 
          style="
+
             --power-color:{power['color']};
+
          ">
 
         <div class="power-icon">
@@ -3869,7 +4173,7 @@ def display_power_card(
 
 
 # ============================================================
-# 23. GAME SETUP SCREEN
+# 25. GAME SETUP
 # ============================================================
 
 def display_setup():
@@ -3880,7 +4184,7 @@ def display_setup():
 
     left, right = st.columns(
 
-        [1, 2.6]
+        [1,2.6]
     )
 
     with left:
@@ -3890,6 +4194,13 @@ def display_setup():
         )
 
         if S.game_mode == "Challenge":
+
+            prepare_widget(
+
+                "_strategy",
+
+                S.strategy
+            )
 
             st.radio(
 
@@ -3917,11 +4228,11 @@ def display_setup():
                     + item
                 ),
 
-                key="strategy",
+                key="_strategy",
 
                 label_visibility="collapsed",
 
-                on_change=change_power
+                on_change=sync_strategy
             )
 
             display_power_card(
@@ -3973,6 +4284,13 @@ def display_setup():
                     args=(30,)
                 )
 
+            prepare_widget(
+
+                "_initial_power",
+
+                S.initial_power
+            )
+
             st.slider(
 
                 "Jump Power (σ)",
@@ -3983,13 +4301,22 @@ def display_setup():
 
                 step=1,
 
-                key="initial_power"
+                key="_initial_power",
+
+                on_change=sync_initial_power
             )
 
         else:
 
             display_power_card(
                 "Manual"
+            )
+
+            prepare_widget(
+
+                "_manual_power",
+
+                S.manual_power
             )
 
             st.slider(
@@ -4002,7 +4329,9 @@ def display_setup():
 
                 step=0.5,
 
-                key="manual_power"
+                key="_manual_power",
+
+                on_change=sync_manual_power
             )
 
         st.button(
@@ -4037,21 +4366,31 @@ def display_setup():
 
         game_card(
 
-            "YOUR MISSION",
+            "🚩 YOUR MISSION",
 
-            "Guide five climbers to position 79 "
-            "within 30 moves. Any climber that "
-            "lands beyond 79 ends the mission.",
+            "Reach exactly position 79 "
+            "within 30 moves. "
+            "Every overshooting generation "
+            "costs one life.",
 
             "#FBBF24"
         )
 
+        game_card(
+
+            "❤️ THREE LIVES",
+
+            "An overshoot rejects the current "
+            "generation. Your surviving climbers "
+            "return to their previous positions.",
+
+            "#F87171"
+        )
+
         if S.game_mode == "Challenge":
 
-            strategy = S.strategy
-
             record = S.best_records.get(
-                strategy
+                S.strategy
             )
 
             record_text = (
@@ -4065,7 +4404,7 @@ def display_setup():
 
             game_card(
 
-                "POWER RECORD",
+                "🏆 POWER RECORD",
 
                 record_text,
 
@@ -4076,18 +4415,17 @@ def display_setup():
 
             game_card(
 
-                "PRACTICE TIP",
+                "🎮 PRACTICE TIP",
 
-                "You can change your jump power "
-                "at any time and see the proposed "
-                "landing positions before jumping.",
+                "Change your power and inspect "
+                "the next landing before jumping.",
 
                 "#4ADE80"
             )
 
 
 # ============================================================
-# 24. GAME STATISTICS
+# 26. STATISTICS
 # ============================================================
 
 def stat_card(
@@ -4133,17 +4471,13 @@ def display_stats():
         fitness(position)
     )
 
-    distance = remaining_distance()
-
-    left = moves_left()
-
     cards = [
 
         stat_card(
 
             "MOVES LEFT",
 
-            left,
+            moves_left(),
 
             f"Turn {S.generation}/30",
 
@@ -4167,12 +4501,14 @@ def display_stats():
 
             "DISTANCE TO FLAG",
 
-            distance,
+            remaining_distance(),
 
             f"Position {position} / 79",
 
             "#4ADE80"
-            if distance == 0
+
+            if position == GLOBAL_OPTIMUM
+
             else "#E879F9"
         )
     ]
@@ -4180,7 +4516,9 @@ def display_stats():
     progress = (
 
         S.generation
+
         / MAX_GENERATIONS
+
         * 100
     )
 
@@ -4206,7 +4544,7 @@ def display_stats():
 
 
 # ============================================================
-# 25. LIVE GAME HINT
+# 27. LIVE HINT
 # ============================================================
 
 def display_hint():
@@ -4216,7 +4554,9 @@ def display_hint():
     <div class="hint-box"
 
          style="
+
             --hint-color:{S.hint_color};
+
          ">
 
         <div class="hint-icon">
@@ -4247,7 +4587,7 @@ def display_hint():
 
 
 # ============================================================
-# 26. PRACTICE MUTATION PREVIEW
+# 28. PRACTICE PREVIEW
 # ============================================================
 
 def display_preview():
@@ -4319,7 +4659,9 @@ def display_preview():
     if overshoot:
 
         message = (
-            "⚠ Danger! Reduce power or try another move."
+
+            "⚠ Danger! This jump will "
+            "cost one life."
         )
 
         color = "#F87171"
@@ -4327,7 +4669,9 @@ def display_preview():
     elif exact_hit:
 
         message = (
-            "✓ Perfect landing available! Press JUMP."
+
+            "✓ Perfect landing available! "
+            "Press JUMP."
         )
 
         color = "#4ADE80"
@@ -4335,7 +4679,9 @@ def display_preview():
     else:
 
         message = (
-            "Adjust your power or take the next jump."
+
+            "Adjust your power or "
+            "take the next jump."
         )
 
         color = "#FBBF24"
@@ -4362,7 +4708,7 @@ def display_preview():
 
         font-weight:700;
 
-        padding:4px 0;
+        padding:3px 0;
 
     ">
 
@@ -4374,14 +4720,12 @@ def display_preview():
 
 
 # ============================================================
-# 27. PRACTICE CONTROLS
+# 29. PRACTICE CONTROLS
 # ============================================================
 
 def display_practice_controls():
 
-    section_title(
-        "YOUR POWER"
-    )
+    display_lives()
 
     display_power_card(
 
@@ -4441,6 +4785,13 @@ def display_practice_controls():
             args=(30.0,)
         )
 
+    prepare_widget(
+
+        "_manual_power",
+
+        S.manual_power
+    )
+
     st.slider(
 
         "Jump Power (σ)",
@@ -4451,24 +4802,12 @@ def display_practice_controls():
 
         step=0.5,
 
-        key="manual_power",
+        key="_manual_power",
 
-        disabled=S.finished
+        disabled=S.finished,
+
+        on_change=sync_manual_power
     )
-
-    st.html("""
-
-    <div class="small-text">
-
-        Small power = finer movements.
-
-        <br>
-
-        Large power = wider exploration.
-
-    </div>
-
-    """)
 
     st.button(
 
@@ -4525,26 +4864,20 @@ def display_practice_controls():
 
 
 # ============================================================
-# 28. CHALLENGE CONTROLS
+# 30. CHALLENGE CONTROLS
 # ============================================================
 
 def display_challenge_controls():
 
     strategy = S.settings[0]
 
-    section_title(
-        "YOUR ACTIVE POWER"
-    )
+    display_lives()
 
     display_power_card(
 
         strategy,
 
         current_power()
-    )
-
-    section_title(
-        "POWER UPDATE"
     )
 
     game_card(
@@ -4600,8 +4933,7 @@ def display_challenge_controls():
         "🚩 MISSION",
 
         "Land exactly at 79. "
-        "Your selected power controls "
-        "the jumps automatically.",
+        "Avoid losing all three lives.",
 
         "#FBBF24"
     )
@@ -4622,7 +4954,7 @@ def display_challenge_controls():
 
 
 # ============================================================
-# 29. GAME FOOTER
+# 31. FOOTER NAVIGATION
 # ============================================================
 
 def display_navigation():
@@ -4694,7 +5026,7 @@ def display_navigation():
 
 
 # ============================================================
-# 30. MAIN GAME SCREEN
+# 32. MAIN GAME SCREEN
 # ============================================================
 
 def display_game():
@@ -4704,12 +5036,13 @@ def display_game():
     )
 
     with st.container(
+
         key="game_area"
     ):
 
         left, right = st.columns(
 
-            [1, 3.2],
+            [1,3.2],
 
             gap="medium"
         )
@@ -4766,7 +5099,7 @@ def display_game():
 
 
 # ============================================================
-# 31. MISSION RESULT POPUP
+# 33. MISSION RESULT POPUP
 # ============================================================
 
 @st.dialog(
@@ -4802,14 +5135,13 @@ def result_dialog():
         reason = (
 
             f"Climber {S.trigger_individual} "
-            "reached exactly position 79. "
-            "Your team successfully balanced "
-            "exploration and precision."
+            "reached exactly position 79."
         )
 
         lesson = (
-            "Large jump power helps exploration. "
-            "Smaller jump power helps refinement."
+
+            "Your selected strategy successfully "
+            "reached the global optimum."
         )
 
     else:
@@ -4821,25 +5153,26 @@ def result_dialog():
         icon = "💥"
 
         subtitle = (
+
             "Your expedition has ended."
         )
 
-        if S.failure_type == "OVERSHOOT":
+        if S.failure_type == "NO_LIVES":
 
-            reason_title = "YOU OVERSHOT!"
+            reason_title = "NO LIVES REMAINING"
 
             reason = (
 
-                f"Climber {S.trigger_individual} "
-                f"jumped from {S.trigger_parent} "
-                f"to {position}. "
-                f"The landing exceeded the flag "
-                f"by {position - GLOBAL_OPTIMUM} units."
+                "Your team lost all three lives. "
+
+                f"The last overshoot landed "
+                f"at position {position}."
             )
 
             lesson = (
+
                 "Try a smaller starting power "
-                "or another power controller."
+                "or a different power controller."
             )
 
         elif abs(
@@ -4847,43 +5180,64 @@ def result_dialog():
         ) <= 5:
 
             reason_title = (
+
                 "TRAPPED AT THE SMALL PEAK"
             )
 
             reason = (
-                "Your team stayed near the smaller "
-                "mountain and could not escape "
-                "before time ran out."
+
+                "Your team could not escape "
+                "the local optimum before "
+                "running out of moves."
             )
 
             lesson = (
-                "Try stronger exploration or "
-                "a different power controller."
+
+                "Try a larger starting power "
+                "for wider exploration."
             )
 
         else:
 
-            reason_title = (
-                "OUT OF MOVES"
-            )
+            reason_title = "OUT OF MOVES"
 
             reason = (
 
-                f"You reached position {position}, "
-                f"but the golden flag was still "
-                f"{remaining_distance()} units away."
+                f"Your team reached position "
+                f"{position}, but the golden "
+                "flag was at position 79."
             )
 
             lesson = (
-                "Try another starting power "
-                "to improve your progress."
+
+                "Try another power strategy "
+                "to balance exploration "
+                "and precision."
             )
 
     stars_html = (
 
         "★" * stars
 
-        + "☆" * (3 - stars)
+        + "☆" * (3-stars)
+    )
+
+    hearts_html = "".join(
+
+        '<span style="color:'
+
+        + (
+
+            "#F87171"
+
+            if i < S.lives
+
+            else "#334155"
+        )
+
+        + '">♥</span>'
+
+        for i in range(MAX_LIVES)
     )
 
     cards = [
@@ -4952,6 +5306,20 @@ def result_dialog():
 
         </div>
 
+        <div style="
+
+            font-size:25px;
+
+            letter-spacing:8px;
+
+            margin-bottom:8px;
+
+        ">
+
+            {hearts_html}
+
+        </div>
+
         <div class="stats-grid">
 
             {''.join(cards)}
@@ -4960,7 +5328,9 @@ def result_dialog():
 
         <div class="result-explanation">
 
-            <div class="result-explanation-title">
+            <div class="card-title"
+
+                 style="color:{color}">
 
                 {escape(reason_title)}
 
@@ -4978,11 +5348,11 @@ def result_dialog():
 
                     color:#FBBF24;
 
-                    margin-top:10px;
+                    margin-top:8px;
 
                  ">
 
-                NEXT STRATEGY
+                STRATEGY FEEDBACK
 
             </div>
 
@@ -5051,7 +5421,7 @@ def result_dialog():
 
 
 # ============================================================
-# 32. PERFORMANCE CHART
+# 34. PERFORMANCE CHART
 # ============================================================
 
 def create_progress_chart(
@@ -5062,12 +5432,15 @@ def create_progress_chart(
 ):
 
     width = 300
+
     height = 150
 
     left = 30
+
     right = 280
 
     top = 25
+
     bottom = 120
 
     values = [
@@ -5081,19 +5454,17 @@ def create_progress_chart(
 
         values = [0.0]
 
-    maximum = (
+    maximum = max(
+
+        1.0,
+
+        max(values),
 
         max_value
 
         if max_value is not None
 
-        else max(1.0, max(values))
-    )
-
-    maximum = max(
-        maximum,
-        max(values),
-        1.0
+        else 1.0
     )
 
     points = []
@@ -5105,10 +5476,13 @@ def create_progress_chart(
             left
 
             + (
-                i / max(1, len(values) - 1)
+
+                i
+
+                / max(1,len(values)-1)
             )
 
-            * (right - left)
+            * (right-left)
         )
 
         y = (
@@ -5116,14 +5490,17 @@ def create_progress_chart(
             bottom
 
             - (
-                value / maximum
+
+                value
+
+                / maximum
             )
 
-            * (bottom - top)
+            * (bottom-top)
         )
 
         points.append(
-            (x, y)
+            (x,y)
         )
 
     path = " ".join(
@@ -5134,15 +5511,16 @@ def create_progress_chart(
 
         + f" {x:.2f} {y:.2f}"
 
-        for i, (x, y) in enumerate(points)
+        for i, (x,y) in enumerate(points)
     )
 
     dots = "".join(
 
         f'<circle cx="{x}" cy="{y}" '
+
         f'r="2.8" fill="{color}"/>'
 
-        for x, y in points
+        for x,y in points
     )
 
     return f"""
@@ -5157,7 +5535,7 @@ def create_progress_chart(
 
             width:100%;
 
-            height:22dvh;
+            height:100%;
 
             background:#101827;
 
@@ -5221,7 +5599,7 @@ def create_progress_chart(
 
             x="25"
 
-            y="{top + 4}"
+            y="{top+4}"
 
             fill="#94A3B8"
 
@@ -5239,7 +5617,7 @@ def create_progress_chart(
 
             x="25"
 
-            y="{bottom + 4}"
+            y="{bottom+4}"
 
             fill="#94A3B8"
 
@@ -5281,7 +5659,7 @@ def create_progress_chart(
 
         >
 
-            Turn 0 → {len(values) - 1}
+            Turn 0 → {len(values)-1}
 
         </text>
 
@@ -5291,7 +5669,134 @@ def create_progress_chart(
 
 
 # ============================================================
-# 33. PERFORMANCE ANALYSIS POPUP
+# 35. SAFE SVG CHART RENDERING
+# ============================================================
+
+def display_progress_charts(dataframe):
+
+    charts = [
+
+        create_progress_chart(
+
+            dataframe["Score"],
+
+            "FITNESS SCORE",
+
+            "#22D3EE",
+
+            max_value=100
+        ),
+
+        create_progress_chart(
+
+            dataframe["Sigma"],
+
+            "JUMP POWER (σ)",
+
+            "#E879F9"
+        ),
+
+        create_progress_chart(
+
+            dataframe["Distance"],
+
+            "DISTANCE TO TARGET",
+
+            "#FBBF24"
+        ),
+
+        create_progress_chart(
+
+            dataframe["Lives"],
+
+            "LIVES REMAINING",
+
+            "#F87171",
+
+            max_value=3
+        )
+    ]
+
+    chart_html = "".join(
+
+        f'<div class="chart">{chart}</div>'
+
+        for chart in charts
+    )
+
+    html = f"""
+
+    <!DOCTYPE html>
+
+    <html>
+
+    <head>
+
+    <style>
+
+        html, body {{
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            font-family: Arial, sans-serif;
+        }}
+
+        .grid {{
+
+            display: grid;
+
+            grid-template-columns: repeat(4,1fr);
+
+            gap: 6px;
+
+            height: 100%;
+        }}
+
+        .chart {{
+
+            min-width: 0;
+
+            min-height: 0;
+        }}
+
+    </style>
+
+    </head>
+
+    <body>
+
+        <div class="grid">
+
+            {chart_html}
+
+        </div>
+
+    </body>
+
+    </html>
+
+    """
+
+    components.html(
+
+        html,
+
+        height=145,
+
+        scrolling=False
+    )
+
+
+# ============================================================
+# 36. PERFORMANCE ANALYSIS POPUP
 # ============================================================
 
 @st.dialog(
@@ -5308,51 +5813,9 @@ def progress_dialog():
         S.history
     )
 
-    a, b, c = st.columns(3)
-
-    with a:
-
-        st.html(
-
-            create_progress_chart(
-
-                dataframe["Score"],
-
-                "FITNESS SCORE",
-
-                "#22D3EE",
-
-                max_value=100
-            )
-        )
-
-    with b:
-
-        st.html(
-
-            create_progress_chart(
-
-                dataframe["Sigma"],
-
-                "JUMP POWER (σ)",
-
-                "#E879F9"
-            )
-        )
-
-    with c:
-
-        st.html(
-
-            create_progress_chart(
-
-                dataframe["Distance"],
-
-                "DISTANCE TO TARGET",
-
-                "#FBBF24"
-            )
-        )
+    display_progress_charts(
+        dataframe
+    )
 
     section_title(
         "MOVE HISTORY"
@@ -5369,6 +5832,7 @@ def progress_dialog():
             np.ceil(
 
                 len(dataframe)
+
                 / page_size
             )
         )
@@ -5382,19 +5846,20 @@ def progress_dialog():
 
             S.history_page,
 
-            total_pages - 1
+            total_pages-1
         )
     )
 
     start = (
 
         S.history_page
+
         * page_size
     )
 
     page = dataframe.iloc[
 
-        start:start + page_size
+        start:start+page_size
 
     ].copy()
 
@@ -5430,7 +5895,7 @@ def progress_dialog():
 
     left, middle, right = st.columns(
 
-        [1, 2, 1]
+        [1,2,1]
     )
 
     with left:
@@ -5446,9 +5911,7 @@ def progress_dialog():
 
             S.history_page -= 1
 
-            st.rerun(
-                scope="fragment"
-            )
+            st.rerun()
 
     with middle:
 
@@ -5464,7 +5927,7 @@ def progress_dialog():
 
              ">
 
-            Page {S.history_page + 1}
+            Page {S.history_page+1}
             of {total_pages}
 
         </div>
@@ -5482,15 +5945,14 @@ def progress_dialog():
             disabled=(
 
                 S.history_page
-                >= total_pages - 1
+
+                >= total_pages-1
             )
         ):
 
             S.history_page += 1
 
-            st.rerun(
-                scope="fragment"
-            )
+            st.rerun()
 
     if st.button(
 
@@ -5507,7 +5969,7 @@ def progress_dialog():
 
 
 # ============================================================
-# 34. POPULATION DETAILS POPUP
+# 37. POPULATION DETAILS POPUP
 # ============================================================
 
 @st.dialog(
@@ -5521,18 +5983,20 @@ def progress_dialog():
 def climbers_dialog():
 
     section_title(
+
         "FIVE SURVIVING CLIMBERS"
     )
 
     population_data = []
 
-    for i, (position, sigma) in enumerate(
-        S.population
-    ):
+    for i, (
+        position,
+        sigma
+    ) in enumerate(S.population):
 
         population_data.append({
 
-            "Climber": i + 1,
+            "Climber": i+1,
 
             "Position": position,
 
@@ -5549,6 +6013,7 @@ def climbers_dialog():
             "Distance": abs(
 
                 GLOBAL_OPTIMUM
+
                 - position
             )
         })
@@ -5568,6 +6033,7 @@ def climbers_dialog():
     ):
 
         section_title(
+
             "NEXT PROPOSED JUMPS"
         )
 
@@ -5576,6 +6042,7 @@ def climbers_dialog():
     else:
 
         section_title(
+
             "LAST FIVE MUTATIONS"
         )
 
@@ -5622,6 +6089,20 @@ def climbers_dialog():
             )
         )
 
+        if S.last_overshoot is not None:
+
+            st.html("""
+
+            <div class="small-text"
+                 style="color:#F87171">
+
+                This generation was rejected
+                because of an overshoot.
+
+            </div>
+
+            """)
+
     else:
 
         st.html("""
@@ -5650,7 +6131,7 @@ def climbers_dialog():
 
 
 # ============================================================
-# 35. GAME GUIDE CONTENT
+# 38. GAME GUIDE
 # ============================================================
 
 GUIDE_CONTENT = {
@@ -5661,36 +6142,64 @@ GUIDE_CONTENT = {
 
             "🚩 Your Mission",
 
-            "Reach exactly position 79 within "
-            "30 moves."
+            "Reach exactly position 79 "
+            "within 30 moves."
         ),
 
         (
 
             "⚡ Jump Power",
 
-            "Sigma controls the scale of random "
-            "movement. Larger sigma generally "
-            "allows wider exploration."
+            "Sigma controls the scale of "
+            "random movement. Larger sigma "
+            "generally allows wider exploration."
         ),
 
         (
 
             "🧗 Your Team",
 
-            "Five climbers generate five new "
-            "candidates each turn. The five "
-            "strongest individuals survive."
+            "Five climbers generate five "
+            "offspring each turn. The five "
+            "strongest individuals survive "
+            "an accepted generation."
+        )
+    ],
+
+    "Lives and Overshoot": [
+
+        (
+
+            "❤️ Three Lives",
+
+            "You begin with three lives."
         ),
 
         (
 
-            "⚠ Danger Zone",
+            "💔 Overshoot",
 
-            "Any offspring beyond position 79 "
-            "fails the mission. This is a special "
-            "game rule, not a standard rule "
-            "of evolutionary algorithms."
+            "If any offspring lands beyond "
+            "position 79, the entire generation "
+            "is rejected and one life is lost."
+        ),
+
+        (
+
+            "Previous Population",
+
+            "Your previous climbers survive. "
+            "The rejected generation still "
+            "uses one move."
+        ),
+
+        (
+
+            "Game Rule",
+
+            "The life penalty is a gameplay "
+            "mechanic, not a standard "
+            "evolutionary algorithm rule."
         )
     ],
 
@@ -5706,10 +6215,10 @@ GUIDE_CONTENT = {
 
         (
 
-            "No Performance Feedback",
+            "Independent of Performance",
 
-            "Power changes regardless of "
-            "whether the climbers improve."
+            "Power decreases even when "
+            "a generation is rejected."
         ),
 
         (
@@ -5726,14 +6235,13 @@ GUIDE_CONTENT = {
 
             "⚡ Performance Feedback",
 
-            "The controller observes how many "
-            "mutations improve their parent's "
-            "fitness."
+            "The controller observes the "
+            "proportion of successful mutations."
         ),
 
         (
 
-            "More Than 20% Success",
+            "More Than 20%",
 
             "Increase sigma by multiplying "
             "it by 1.25."
@@ -5741,19 +6249,18 @@ GUIDE_CONTENT = {
 
         (
 
-            "Less Than 20% Success",
+            "Less Than 20%",
 
             "Decrease sigma by multiplying "
-            "it by 0.8."
+            "it by 0.8. A rejected generation "
+            "counts as zero accepted successes."
         ),
 
         (
 
-            "Exactly 20% Success",
+            "Exactly 20%",
 
-            "Keep sigma unchanged. This is "
-            "the 1/5 success rule used in "
-            "this simulation."
+            "Keep sigma unchanged."
         )
     ],
 
@@ -5763,7 +6270,7 @@ GUIDE_CONTENT = {
 
             "🧬 Individual Power",
 
-            "Every climber carries its own "
+            "Each climber carries its own "
             "sigma value."
         ),
 
@@ -5779,9 +6286,9 @@ GUIDE_CONTENT = {
 
             "Survival Selection",
 
-            "The strongest individuals survive "
-            "together with their associated "
-            "sigma values."
+            "Surviving individuals keep "
+            "their associated sigma values. "
+            "Rejected offspring are discarded."
         ),
 
         (
@@ -5799,24 +6306,24 @@ GUIDE_CONTENT = {
             "🎮 Free Control",
 
             "Change your jump power at any time "
-            "without resetting your progress."
+            "without resetting the game."
         ),
 
         (
 
             "Landing Preview",
 
-            "Inspect all five proposed landing "
-            "positions before jumping."
+            "Inspect all five proposed "
+            "landing positions."
         ),
 
         (
 
             "Try Another Move",
 
-            "Reject the current proposal and "
-            "consume one turn to obtain a "
-            "new random draw."
+            "Skip the current proposal and "
+            "consume one move without losing "
+            "a life."
         )
     ],
 
@@ -5824,26 +6331,26 @@ GUIDE_CONTENT = {
 
         (
 
-            "⭐ Three Stars",
+            "⭐⭐⭐ Three Stars",
 
-            "Complete the mission in 10 moves "
-            "or fewer."
+            "Win within 10 moves "
+            "without losing any lives."
         ),
 
         (
 
-            "⭐ Two Stars",
+            "⭐⭐ Two Stars",
 
-            "Complete the mission in "
-            "11 to 20 moves."
+            "Win within 20 moves "
+            "with at least two lives remaining."
         ),
 
         (
 
             "⭐ One Star",
 
-            "Complete the mission in "
-            "21 to 30 moves."
+            "Complete the mission with "
+            "any other valid winning result."
         ),
 
         (
@@ -5858,7 +6365,7 @@ GUIDE_CONTENT = {
 
 
 # ============================================================
-# 36. LEARNING GUIDE POPUP
+# 39. LEARNING GUIDE POPUP
 # ============================================================
 
 @st.dialog(
@@ -5871,6 +6378,13 @@ GUIDE_CONTENT = {
 )
 def guide_dialog():
 
+    prepare_widget(
+
+        "_guide_topic",
+
+        S.guide_topic
+    )
+
     topic = st.selectbox(
 
         "Choose a topic",
@@ -5879,8 +6393,10 @@ def guide_dialog():
             GUIDE_CONTENT.keys()
         ),
 
-        key="guide_topic"
+        key="_guide_topic"
     )
+
+    S.guide_topic = topic
 
     html = ""
 
@@ -5923,43 +6439,7 @@ def guide_dialog():
 
 
 # ============================================================
-# 37. PRESERVE WIDGET STATE
-# ============================================================
-
-# Streamlit can remove widget state when a widget
-# is not rendered on the current screen.
-#
-# Restore values from the active game settings
-# before rendering the relevant widgets.
-
-if S.screen == "game":
-
-    active_strategy, active_initial = (
-        S.settings
-    )
-
-    if S.game_mode == "Challenge":
-
-        S.strategy = active_strategy
-
-        S.initial_power = int(
-            active_initial
-        )
-
-    else:
-
-        # Keep the latest manual power
-        # when the setup screen disappears.
-
-        if "manual_power" not in S:
-
-            S.manual_power = float(
-                S.sigma
-            )
-
-
-# ============================================================
-# 38. APPLICATION ROUTING
+# 40. APPLICATION ROUTING
 # ============================================================
 
 if S.screen == "menu":
