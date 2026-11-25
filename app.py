@@ -570,11 +570,209 @@ st.markdown(
 
 }}
 
+
+/* ==========================================================
+   FIXED SINGLE SCREEN DASHBOARD
+   ========================================================== */
+
+@media (min-width: 1200px) and (min-height: 700px) {{
+
+    /* MAIN SCREEN */
+
+    html,
+    body {{
+        height: 100%;
+        margin: 0;
+    }}
+
+    .stApp {{
+        height: 100dvh;
+    }}
+
+    [data-testid="stMain"] {{
+        height: 100dvh;
+    }}
+
+    /* MAIN DASHBOARD CONTAINER */
+
+    .block-container {{
+        max-width: 1800px;
+        padding-top: 1.1rem !important;
+        padding-bottom: 0.5rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        box-sizing: border-box;
+    }}
+
+    /* HEADER */
+
+    .hero {{
+        padding-top: 0 !important;
+        padding-bottom: 6px !important;
+        margin-bottom: 0 !important;
+    }}
+
+    .hero-label {{
+        font-size: 9px;
+        margin-bottom: 3px;
+    }}
+
+    .hero-title {{
+        font-size: 30px;
+        line-height: 1.2;
+        margin-bottom: 4px;
+    }}
+
+    .hero-subtitle {{
+        font-size: 9px;
+        line-height: 1.4;
+    }}
+
+    /* LEFT PANEL */
+
+    .st-key-left_panel {{
+        box-sizing: border-box;
+        width: 100%;
+    }}
+
+    .st-key-left_panel [data-testid="stVerticalBlock"] {{
+        gap: 0.4rem !important;
+    }}
+
+    /* SECTION HEADINGS */
+
+    .section-heading {{
+        margin-top: 0 !important;
+        margin-bottom: 4px !important;
+        line-height: 1.5;
+    }}
+
+    /* RADIO BUTTONS */
+
+    .st-key-left_panel [data-testid="stRadio"] {{
+        width: 100% !important;
+        margin: 0;
+    }}
+
+    .st-key-left_panel [role="radiogroup"] {{
+        width: 100% !important;
+        padding: 6px 10px;
+        gap: 3px;
+    }}
+
+    /* STRATEGY DESCRIPTION */
+
+    .strategy-description {{
+        padding: 8px 10px;
+    }}
+
+    .strategy-description-title {{
+        margin-bottom: 4px;
+    }}
+
+    .strategy-description-text {{
+        font-size: 12px;
+        line-height: 1.5;
+    }}
+
+    /* SLIDER */
+
+    .st-key-left_panel [data-testid="stSlider"] {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    .slider-help {{
+        font-size: 10px;
+        line-height: 1.4;
+    }}
+
+    /* GAME CONTROLS */
+
+    .st-key-left_panel .stButton > button {{
+        min-height: 34px;
+        padding: 5px 10px;
+    }}
+
+    /* MISSION */
+
+    .mission-card {{
+        padding: 8px 10px;
+    }}
+
+    .mission-title {{
+        margin-bottom: 4px;
+    }}
+
+    .mission-text {{
+        font-size: 11px;
+        line-height: 1.5;
+    }}
+
+    /* RIGHT PANEL */
+
+    .st-key-right_panel [data-testid="stVerticalBlock"] {{
+        gap: 0.5rem !important;
+    }}
+
+    /* STATISTIC CARDS */
+
+    .metric-card {{
+        padding: 10px 13px;
+    }}
+
+    .metric-value {{
+        font-size: 24px;
+    }}
+
+    /* LIVE FEEDBACK */
+
+    .feedback-box {{
+        padding: 9px 13px;
+    }}
+
+    /* BOTTOM NAVIGATION */
+
+    .st-key-bottom_navigation {{
+        padding-top: 7px;
+        margin-top: 0;
+    }}
+
+    .st-key-bottom_navigation .stButton > button {{
+        min-height: 34px;
+        padding: 5px 10px;
+    }}
+
+    /* HIDE VISIBLE SCROLLBAR */
+
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"] {{
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }}
+
+    [data-testid="stMain"]::-webkit-scrollbar,
+    [data-testid="stMainBlockContainer"]::-webkit-scrollbar {{
+        display: none;
+        width: 0;
+    }}
+
+}}
+
+
+/* ==========================================================
+   KEEP POP-UP WINDOWS SCROLLABLE
+   ========================================================== */
+
+[data-testid="stDialog"] [role="dialog"] {{
+    max-height: 90dvh;
+    overflow-y: auto;
+}}
+
 </style>
     """,
     unsafe_allow_html=True
 )
-
 
 # ============================================================
 # 04. SIMULATION CONSTANTS
