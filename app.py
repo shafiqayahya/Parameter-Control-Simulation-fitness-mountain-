@@ -388,11 +388,358 @@ st.markdown(
 
 }}
 
+
+/* ==================================================
+   FINAL DASHBOARD SPACING FIX
+   ================================================== */
+
+/* MAIN CONTAINER */
+
+.block-container {{
+    max-width: 1600px;
+    padding-top: 1.8rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+}}
+
+
+/* NORMALIZE COMPONENT SPACING */
+
+[data-testid="stVerticalBlock"] {{
+    gap: 0.65rem !important;
+}}
+
+[data-testid="stHorizontalBlock"] {{
+    gap: 1rem !important;
+    align-items: flex-start;
+}}
+
+[data-testid="stElementContainer"] {{
+    min-height: 0;
+    margin: 0 !important;
+}}
+
+
+/* HEADER */
+
+.hero {{
+    padding-top: 0;
+    padding-bottom: 18px !important;
+    margin-bottom: 6px;
+}}
+
+.hero-title {{
+    font-size: 34px;
+    line-height: 1.3;
+    margin: 5px 0 8px;
+}}
+
+.hero-subtitle {{
+    line-height: 1.5;
+}}
+
+
+/* SECTION LABELS */
+
+.section-label {{
+    display: block;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 2px;
+    font-weight: 700;
+    padding: 0;
+    margin: 2px 0 5px !important;
+}}
+
+
+/* LEFT CONTROL PANEL */
+
+[data-testid="stVerticalBlockBorderWrapper"] {{
+    border-radius: 12px;
+}}
+
+[data-testid="stRadio"] {{
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+}}
+
+[data-testid="stRadio"] > div {{
+    width: 100% !important;
+}}
+
+[data-testid="stRadio"] [role="radiogroup"] {{
+    width: 100%;
+    gap: 5px !important;
+}}
+
+[data-testid="stRadio"] label {{
+    font-size: 13px;
+    line-height: 1.5;
+}}
+
+[data-testid="stWidgetLabel"] {{
+    margin-bottom: 5px !important;
+}}
+
+
+/* STRATEGY DESCRIPTION */
+
+.strategy-info {{
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    line-height: 1.5;
+    border-radius: 8px;
+}}
+
+
+/* MUTATION SLIDER */
+
+[data-testid="stSlider"] {{
+    width: 100%;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    margin: 0 !important;
+}}
+
+[data-testid="stSlider"] label {{
+    line-height: 1.5;
+}}
+
+
+/* STATISTIC CARDS */
+
+.metric-card {{
+    width: 100%;
+    min-height: 76px !important;
+    height: auto;
+    padding: 12px 15px !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid #334155;
+    border-radius: 10px;
+}}
+
+.metric-label {{
+    font-size: 10px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}}
+
+.metric-value {{
+    font-size: 25px !important;
+    line-height: 1.25;
+}}
+
+
+/* GENERATION PROGRESS BAR */
+
+[data-testid="stProgress"] {{
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    margin: 0 !important;
+}}
+
+
+/* GAME BUTTONS */
+
+.stButton {{
+    width: 100%;
+    margin: 0 !important;
+}}
+
+.stButton > button {{
+    width: 100%;
+    min-height: 36px !important;
+    height: auto;
+    padding: 7px 10px !important;
+    margin: 0 !important;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+}}
+
+.stButton > button[kind="primary"] {{
+    background: #155E75;
+    border: 1px solid #22D3EE;
+    color: #FFFFFF;
+}}
+
+
+/* FITNESS LANDSCAPE */
+
+[data-testid="stImage"] {{
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+
+[data-testid="stImage"] img {{
+    display: block;
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid #26394C;
+}}
+
+
+/* GRAPH LEGEND */
+
+.graph-legend {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #94A3B8;
+    padding: 4px 0;
+    margin: 0;
+    min-height: 24px;
+    box-sizing: border-box;
+}}
+
+.graph-legend span {{
+    display: inline-block;
+    white-space: nowrap;
+}}
+
+
+/* LIVE EVOLUTION FEEDBACK */
+
+.feedback-box {{
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+    box-sizing: border-box;
+    padding: 10px 14px !important;
+    margin: 0 !important;
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid #334155;
+    border-left: 4px solid #FBBF24;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}}
+
+.feedback-title {{
+    display: block;
+    color: #FBBF24;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 5px;
+}}
+
+
+/* MISSION */
+
+.mission {{
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 0 0 3px;
+    margin: 0;
+    color: #94A3B8;
+}}
+
+
+/* CAPTION */
+
+[data-testid="stCaptionContainer"] {{
+    margin: 0 !important;
+}}
+
+[data-testid="stCaptionContainer"] p {{
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 0;
+}}
+
+
+/* BOTTOM NAVIGATION */
+
+.navigation-divider {{
+    border-top: 1px solid #26394C;
+    margin: 8px 0 4px !important;
+}}
+
+
+/* RESPONSIVE DESKTOP */
+
+@media (max-height: 900px) {{
+
+    .block-container {{
+        padding-top: 1.3rem !important;
+        padding-bottom: 0.5rem !important;
+    }}
+
+    .hero {{
+        padding-bottom: 10px !important;
+        margin-bottom: 2px;
+    }}
+
+    [data-testid="stVerticalBlock"] {{
+        gap: 0.5rem !important;
+    }}
+
+    .metric-card {{
+        min-height: 68px !important;
+        padding: 10px 14px !important;
+    }}
+
+    .metric-value {{
+        font-size: 23px !important;
+    }}
+
+    .strategy-info {{
+        padding: 8px 10px !important;
+    }}
+
+    .feedback-box {{
+        padding: 9px 12px !important;
+    }}
+
+}}
+
+
+/* RESPONSIVE SMALL SCREEN */
+
+@media (max-width: 900px) {{
+
+    .block-container {{
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }}
+
+    .hero-title {{
+        font-size: 26px;
+        letter-spacing: 3px;
+    }}
+
+    .metric-value {{
+        font-size: 20px !important;
+    }}
+
+}}
+
 </style>
     """,
     unsafe_allow_html=True
 )
-
 
 # ==================================================
 # CONSTANTS
