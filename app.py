@@ -3447,9 +3447,9 @@ def display_fitness_landscape(accent):
 
         fig, ax = plt.subplots(
 
-            figsize=(12, 3.1),
+            figsize=(13.5, 4.2),
 
-            dpi=130
+            dpi=150
         )
 
         try:
@@ -5469,7 +5469,7 @@ def display_dashboard():
 
         left_column, right_column = st.columns(
 
-            [1, 3.2],
+            [1, 3],
 
             gap="medium"
         )
